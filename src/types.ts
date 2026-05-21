@@ -1,8 +1,14 @@
-export type Category = "Budgeting" | "Investing" | "Credit and Debt" | "Scams";
+import type { LucideIcon } from "lucide-react";
+
+export type SectionName = "Basics" | "Budgeting" | "Investing" | "Credit & Debt" | "Scams";
+
+export type LessonType = "lesson" | "quiz" | "challenge" | "story" | "review";
 
 export type Difficulty = "Beginner" | "Intermediate";
 
-export type View = "landing" | "dashboard" | "learn" | "lesson" | "tutor" | "progress";
+export type View = "map" | "learn" | "review" | "progress" | "profile" | "lesson" | "quiz" | "complete" | "tutor";
+
+export type NodeState = "locked" | "available" | "current" | "completed";
 
 export type QuizQuestion = {
   question: string;
@@ -14,15 +20,25 @@ export type QuizQuestion = {
 export type Lesson = {
   id: string;
   title: string;
-  category: Category;
+  description: string;
+  section: SectionName;
+  order: number;
+  type: LessonType;
   difficulty: Difficulty;
   duration: string;
-  summary: string;
-  body: string[];
+  content: string[];
   example: string;
-  takeaways: string[];
-  accent: "cyan" | "violet" | "mint" | "amber";
+  encouragement: string;
   questions: QuizQuestion[];
+};
+
+export type PathSection = {
+  id: string;
+  name: SectionName;
+  subtitle: string;
+  color: string;
+  icon: LucideIcon;
+  lessons: Lesson[];
 };
 
 export type QuizResult = {
@@ -47,15 +63,7 @@ export type StreakState = {
   history: string[];
 };
 
-export type FinovaState = {
-  xp: number;
-  completedLessons: string[];
-  quizResults: Record<string, QuizResult>;
-  streak: StreakState;
-  xpHistory: XpEvent[];
-};
-
-export type LevelName = "Beginner" | "Saver" | "Investor" | "Financial Master";
+export type LevelName = "Beginner" | "Smart Saver" | "Investor" | "Money Master" | "Financial Legend";
 
 export type TutorAnswer = {
   simpleExplanation: string;

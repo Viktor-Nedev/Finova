@@ -4,34 +4,35 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Manrope", "Plus Jakarta Sans", "ui-sans-serif", "system-ui"],
-        display: ["Space Grotesk", "Manrope", "ui-sans-serif", "system-ui"],
+        sans: ["Nunito", "Poppins", "Inter", "ui-sans-serif", "system-ui"],
+        display: ["Nunito", "Poppins", "Inter", "ui-sans-serif", "system-ui"],
       },
       colors: {
-        ink: "#07111f",
-        night: "#0a1020",
-        cyanova: "#20e6ff",
-        violetnova: "#8b5cf6",
-        mintnova: "#3df7a8",
-        glass: "rgba(255, 255, 255, 0.08)",
+        "duo-green": "#16A34A",
+        "duo-green-dark": "#12813B",
+        "duo-green-light": "#58CC02",
+        "duo-yellow": "#FBBF24",
+        "duo-blue": "#1CB0F6",
+        "duo-red": "#FF4B4B",
+        "duo-sky": "#F7FBF2",
+        "duo-ink": "#1F2937",
+        "duo-brown": "#6B3A00",
       },
       boxShadow: {
-        glow: "0 0 34px rgba(32, 230, 255, 0.28)",
-        violet: "0 0 42px rgba(139, 92, 246, 0.26)",
+        duo: "0 8px 0 rgba(18, 129, 59, 0.95)",
+        soft: "0 18px 45px rgba(15, 23, 42, 0.08)",
+      },
+      gridTemplateColumns: {
+        14: "repeat(14, minmax(0, 1fr))",
       },
       keyframes: {
-        float: {
-          "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-14px)" },
-        },
-        pulseGlow: {
-          "0%, 100%": { opacity: 0.35 },
-          "50%": { opacity: 0.8 },
+        confettiFall: {
+          "0%": { transform: "translate3d(0, -12vh, 0) rotate(0deg)", opacity: 1 },
+          "100%": { transform: "translate3d(0, 112vh, 0) rotate(720deg)", opacity: 0 },
         },
       },
       animation: {
-        float: "float 7s ease-in-out infinite",
-        pulseGlow: "pulseGlow 5s ease-in-out infinite",
+        confettiFall: "confettiFall 2.4s ease-in forwards",
       },
     },
   },

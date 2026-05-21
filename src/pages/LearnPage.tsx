@@ -1,66 +1,70 @@
-import { useState } from "react";
-import { LessonCard } from "../components/LessonCard";
-import { categories, categoryStyles, lessons } from "../data/lessons";
-import { useFinova } from "../state/FinovaContext";
-import type { Category } from "../types";
+import { CheckCircle2, LockKeyhole, PlayCircle } from "lucide-react";
+import { pathSections } from "../data/lessons";
+import { useFinovaStore } from "../state/useFinovaStore";
 
 type LearnPageProps = {
   onOpenLesson: (lessonId: string) => void;
 };
 
 export function LearnPage({ onOpenLesson }: LearnPageProps) {
-  const { state } = useFinova();
-  const [selectedCategory, setSelectedCategory] = useState<Category | "All">("All");
-  const visibleLessons =
-    selectedCategory === "All" ? lessons : lessons.filter((lesson) => lesson.category === selectedCategory);
+  const completedLessons = useFinovaStore((state) => state.completedLessons);
+  const isLessonUnlocked = useFinovaStore((state) => state.isLessonUnlocked);
 
   return (
-    <div className="space-y-8">
-      <section className="glass-card p-6 sm:p-8">
-        <p className="text-xs uppercase tracking-[0.24em] text-cyanova/70">Learn</p>
-        <h1 className="mt-3 font-display text-4xl font-black text-white sm:text-5xl">Choose your next money quest.</h1>
-        <p className="mt-4 max-w-2xl text-slate-300">
-          Lessons are built for 1 to 2 minute sessions. Open a card, read the example, and start the quiz.
+    <div className="min-h-[calc(100vh-5rem)] bg-duo-sky px-4 pb-24 pt-6 sm:px-8">
+      <section className="duo-card p-6 sm:p-8">
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-duo-green">Learn</p>
+        <h1 className="mt-2 text-4xl font-black text-slate-800 sm:text-5xl">All Finova units</h1>
+        <p className="mt-3 max-w-3xl text-lg font-bold text-slate-500">
+          The map is the main experience. This page is a quick index for reviewing unlocked lessons.
         </p>
-
-        <div className="mt-6 flex flex-wrap gap-2">
-          {(["All", ...categories] as const).map((category) => (
-            <button
-              key={category}
-              className={`rounded-full px-4 py-2 text-sm font-black transition ${
-                selectedCategory === category ? "bg-white text-night" : "border border-white/10 text-slate-300 hover:bg-white/10"
-              }`}
-              onClick={() => setSelectedCategory(category)}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {categories.map((category) => {
-          const styles = categoryStyles[category];
+      <div className="mt-5 grid gap-5 lg:grid-cols-2">
+        {pathSections.map((section) => {
+          const Icon = section.icon;
           return (
-            <div key={category} className={`rounded-[2rem] border bg-gradient-to-br ${styles.gradient} ${styles.ring} p-5`}>
-              <p className="text-xs uppercase tracking-[0.24em] text-slate-300">{styles.eyebrow}</p>
-              <h2 className="mt-2 font-display text-2xl font-black text-white">{category}</h2>
-              <p className="mt-2 text-sm text-slate-300">{styles.description}</p>
-            </div>
+            <section key={section.id} className="duo-card overflow-hidden">
+              <div className="flex items-center gap-4 border-b-2 border-slate-100 p-5">
+                <div className="grid h-14 w-14 place-items-center rounded-2xl text-white shadow-duo" style={{ backgroundColor: section.color }}>
+                  <Icon className="h-7 w-7" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black text-slate-800">{section.name}</h2>
+                  <p className="text-sm font-bold text-slate-500">{section.subtitle}</p>
+                </div>
+              </div>
+              <div className="divide-y-2 divide-slate-100">
+                {section.lessons.map((lesson) => {
+                  const completed = completedLessons.includes(lesson.id);
+                  const unlocked = isLessonUnlocked(lesson.id);
+                  return (
+                    <button
+                      key={lesson.id}
+                      className="flex w-full items-center gap-4 p-4 text-left transition hover:bg-green-50 disabled:hover:bg-white"
+                      disabled={!unlocked}
+                      onClick={() => onOpenLesson(lesson.id)}
+                    >
+                      <span
+                        className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${
+                          completed ? "bg-duo-green text-white" : unlocked ? "bg-green-50 text-duo-green" : "bg-slate-100 text-slate-400"
+                        }`}
+                      >
+                        {completed ? <CheckCircle2 className="h-6 w-6" /> : unlocked ? <PlayCircle className="h-6 w-6" /> : <LockKeyhole className="h-6 w-6" />}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-black text-slate-800">{lesson.title}</span>
+                        <span className="text-sm font-bold text-slate-500">{lesson.description}</span>
+                      </span>
+                      <span className="rounded-full bg-slate-50 px-3 py-1 text-xs font-black uppercase text-slate-400">{lesson.type}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
           );
         })}
-      </section>
-
-      <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {visibleLessons.map((lesson) => (
-          <LessonCard
-            key={lesson.id}
-            lesson={lesson}
-            completed={state.completedLessons.includes(lesson.id)}
-            onOpen={onOpenLesson}
-          />
-        ))}
-      </section>
+      </div>
     </div>
   );
 }

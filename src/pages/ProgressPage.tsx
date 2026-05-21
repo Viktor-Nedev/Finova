@@ -1,93 +1,82 @@
+import { CalendarDays, Flame, Gem, Trophy, Zap } from "lucide-react";
 import { ProgressChart } from "../components/ProgressChart";
-import { XPBar } from "../components/XPBar";
-import { lessons } from "../data/lessons";
-import { useFinova } from "../state/FinovaContext";
+import { ProgressBar } from "../components/ProgressBar";
+import { getLevel, getNextLevel, lessons } from "../data/lessons";
+import { useFinovaStore } from "../state/useFinovaStore";
 
 export function ProgressPage() {
-  const { state, level, nextLevel } = useFinova();
+  const xp = useFinovaStore((state) => state.xp);
+  const coins = useFinovaStore((state) => state.coins);
+  const streak = useFinovaStore((state) => state.streak);
+  const completedLessons = useFinovaStore((state) => state.completedLessons);
+  const level = getLevel(xp);
+  const nextLevel = getNextLevel(xp);
+  const levelMax = nextLevel ? nextLevel.minXp - level.minXp : 1;
+  const levelValue = nextLevel ? xp - level.minXp : levelMax;
 
   return (
-    <div className="space-y-6">
-      <section className="glass-card p-6 sm:p-8">
-        <p className="text-xs uppercase tracking-[0.24em] text-cyanova/70">Progress</p>
-        <h1 className="mt-3 font-display text-4xl font-black text-white sm:text-5xl">Track your money skill streak.</h1>
-        <p className="mt-4 max-w-2xl text-slate-300">
-          XP, completed lessons, quiz results, and streaks are saved locally for the demo and can be synced to Supabase.
-        </p>
-        <div className="mt-7">
-          <XPBar xp={state.xp} />
+    <div className="min-h-[calc(100vh-5rem)] bg-duo-sky px-4 pb-24 pt-6 sm:px-8">
+      <section className="duo-card p-6 sm:p-8">
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-duo-green">Progress</p>
+        <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-4xl font-black text-slate-800 sm:text-5xl">{level.name}</h1>
+            <p className="mt-2 text-lg font-bold text-slate-500">{level.badge}</p>
+          </div>
+          <div className="w-full max-w-md">
+            <ProgressBar value={levelValue} max={levelMax} label={nextLevel ? `Next: ${nextLevel.name}` : "Max level"} />
+          </div>
         </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <ProgressChart history={state.xpHistory} xp={state.xp} />
-
-        <div className="space-y-4">
-          <div className="glass-card p-6">
-            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Level ladder</p>
-            <h2 className="mt-2 font-display text-3xl font-black text-white">{level.name}</h2>
-            <p className="mt-2 text-sm text-slate-300">
-              {nextLevel ? `${nextLevel.minXp - state.xp} XP until ${nextLevel.name}.` : "You reached the top level."}
-            </p>
-          </div>
-
-          <div className="glass-card p-6">
-            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Streak history</p>
-            <div className="mt-5 grid grid-cols-7 gap-2">
-              {Array.from({ length: 14 }, (_, index) => {
-                const date = new Date();
-                date.setDate(date.getDate() - (13 - index));
-                const key = date.toISOString().slice(0, 10);
-                const active = state.streak.history.includes(key);
-                return (
-                  <div
-                    key={key}
-                    className={`h-12 rounded-2xl border ${
-                      active ? "border-mintnova bg-mintnova/20 shadow-glow" : "border-white/10 bg-white/[0.04]"
-                    }`}
-                    title={key}
-                  />
-                );
-              })}
+      <section className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          { label: "Total XP", value: xp, icon: Zap, color: "text-duo-green", bg: "bg-green-50" },
+          { label: "Streak", value: `${streak.count} days`, icon: Flame, color: "text-orange-500", bg: "bg-orange-50" },
+          { label: "Coins", value: coins, icon: Gem, color: "text-amber-500", bg: "bg-yellow-50" },
+          { label: "Lessons", value: `${completedLessons.length}/${lessons.length}`, icon: Trophy, color: "text-duo-blue", bg: "bg-blue-50" },
+        ].map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div key={stat.label} className="duo-card p-5">
+              <div className={`grid h-12 w-12 place-items-center rounded-2xl ${stat.bg} ${stat.color}`}>
+                <Icon className="h-7 w-7" />
+              </div>
+              <p className="mt-4 text-sm font-black uppercase tracking-[0.14em] text-slate-400">{stat.label}</p>
+              <p className="text-3xl font-black text-slate-800">{stat.value}</p>
             </div>
-          </div>
-        </div>
-      </div>
+          );
+        })}
+      </section>
 
-      <section className="glass-card p-6">
-        <div className="mb-5 flex items-end justify-between gap-4">
+      <section className="mt-5 duo-card p-5 sm:p-6">
+        <div className="flex items-center gap-3">
+          <CalendarDays className="h-7 w-7 text-duo-green" />
           <div>
-            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Completed lessons</p>
-            <h2 className="mt-2 font-display text-3xl font-black text-white">
-              {state.completedLessons.length}/{lessons.length} quests complete
-            </h2>
+            <h2 className="text-2xl font-black text-slate-800">Streak history</h2>
+            <p className="text-sm font-bold text-slate-500">Green days mean you checked in and earned your streak reward.</p>
           </div>
         </div>
-        <div className="grid gap-3 md:grid-cols-2">
-          {lessons.map((lesson) => {
-            const result = state.quizResults[lesson.id];
-            const completed = state.completedLessons.includes(lesson.id);
+        <div className="mt-5 grid grid-cols-7 gap-2 sm:grid-cols-14">
+          {Array.from({ length: 21 }, (_, index) => {
+            const date = new Date();
+            date.setDate(date.getDate() - (20 - index));
+            const key = date.toISOString().slice(0, 10);
+            const active = streak.history.includes(key);
             return (
               <div
-                key={lesson.id}
-                className={`rounded-2xl border p-4 ${
-                  completed ? "border-mintnova/30 bg-mintnova/10" : "border-white/10 bg-white/[0.04]"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-bold text-white">{lesson.title}</p>
-                    <p className="text-xs text-slate-400">{lesson.category}</p>
-                  </div>
-                  <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-300">
-                    {result ? `${result.score}/${result.total}` : "Open"}
-                  </span>
-                </div>
-              </div>
+                key={key}
+                title={key}
+                className={`aspect-square rounded-2xl border-2 ${active ? "border-duo-green bg-duo-green shadow-[0_4px_0_#12813b]" : "border-slate-100 bg-white"}`}
+              />
             );
           })}
         </div>
       </section>
+
+      <div className="mt-5">
+        <ProgressChart />
+      </div>
     </div>
   );
 }

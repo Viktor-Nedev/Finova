@@ -1,41 +1,595 @@
-import type { Category, Lesson, LevelName } from "../types";
+import {
+  BarChart3,
+  BookOpen,
+  CreditCard,
+  Flame,
+  ShieldCheck,
+  Star,
+  Trophy,
+  Wallet,
+} from "lucide-react";
+import type { Lesson, LessonType, PathSection, QuizQuestion, SectionName, LevelName } from "../types";
 
-export const categoryStyles: Record<
-  Category,
-  { eyebrow: string; gradient: string; ring: string; description: string }
-> = {
+const sectionMeta: Record<SectionName, { subtitle: string; color: string; icon: PathSection["icon"] }> = {
+  Basics: {
+    subtitle: "Start with money habits that make every other skill easier.",
+    color: "#16A34A",
+    icon: BookOpen,
+  },
   Budgeting: {
-    eyebrow: "Cash flow",
-    gradient: "from-cyan-400/25 via-blue-500/20 to-transparent",
-    ring: "ring-cyan-300/30",
-    description: "Plan spending before money disappears.",
+    subtitle: "Give every dollar a job before it disappears.",
+    color: "#22C55E",
+    icon: Wallet,
   },
   Investing: {
-    eyebrow: "Growth",
-    gradient: "from-mintnova/25 via-emerald-500/15 to-transparent",
-    ring: "ring-mintnova/30",
-    description: "Understand risk, time, and compounding.",
+    subtitle: "Learn risk, time, and the power of compound growth.",
+    color: "#0EA5E9",
+    icon: BarChart3,
   },
-  "Credit and Debt": {
-    eyebrow: "Borrowing",
-    gradient: "from-violetnova/25 via-fuchsia-500/15 to-transparent",
-    ring: "ring-violetnova/30",
-    description: "Use credit without letting it use you.",
+  "Credit & Debt": {
+    subtitle: "Use borrowing tools without getting trapped by them.",
+    color: "#F59E0B",
+    icon: CreditCard,
   },
   Scams: {
-    eyebrow: "Safety",
-    gradient: "from-amber-300/25 via-orange-500/15 to-transparent",
-    ring: "ring-amber-300/30",
-    description: "Spot pressure, fake prizes, and phishing.",
+    subtitle: "Spot pressure tactics, fake prizes, and phishing messages.",
+    color: "#EF4444",
+    icon: ShieldCheck,
   },
 };
 
+const typeDetails: Record<LessonType, { label: string; icon: typeof BookOpen; xpHint: string }> = {
+  lesson: { label: "Lesson", icon: BookOpen, xpHint: "+10 XP" },
+  quiz: { label: "Quiz", icon: Trophy, xpHint: "+5-20 XP" },
+  challenge: { label: "Challenge", icon: Flame, xpHint: "+20 XP" },
+  story: { label: "Story", icon: BookOpen, xpHint: "+10 XP" },
+  review: { label: "Review", icon: Star, xpHint: "+10 XP" },
+};
+
 export const levelThresholds: { name: LevelName; minXp: number; maxXp: number; badge: string }[] = [
-  { name: "Beginner", minXp: 0, maxXp: 119, badge: "Launch" },
-  { name: "Saver", minXp: 120, maxXp: 299, badge: "Cash Pilot" },
-  { name: "Investor", minXp: 300, maxXp: 599, badge: "Market Builder" },
-  { name: "Financial Master", minXp: 600, maxXp: Number.POSITIVE_INFINITY, badge: "Money Strategist" },
+  { name: "Beginner", minXp: 0, maxXp: 119, badge: "First Steps" },
+  { name: "Smart Saver", minXp: 120, maxXp: 299, badge: "Habit Builder" },
+  { name: "Investor", minXp: 300, maxXp: 599, badge: "Growth Explorer" },
+  { name: "Money Master", minXp: 600, maxXp: 999, badge: "Strategy Champ" },
+  { name: "Financial Legend", minXp: 1000, maxXp: Number.POSITIVE_INFINITY, badge: "Finova Hero" },
 ];
+
+const sectionQuestions: Record<SectionName, QuizQuestion[]> = {
+  Basics: [
+    {
+      question: "What is the first step before making a money plan?",
+      options: ["Know how much money comes in", "Buy something fun", "Borrow more", "Ignore small purchases"],
+      correctAnswer: "Know how much money comes in",
+      explanation: "A plan starts with income because that tells you how much money is available.",
+    },
+    {
+      question: "What is a trade-off?",
+      options: ["Choosing one thing means giving up another", "Getting everything for free", "A secret bank fee", "A type of scam"],
+      correctAnswer: "Choosing one thing means giving up another",
+      explanation: "Every money choice uses resources that could have gone somewhere else.",
+    },
+    {
+      question: "Why track spending?",
+      options: ["To see where money really goes", "To make money vanish", "To avoid goals", "To impress stores"],
+      correctAnswer: "To see where money really goes",
+      explanation: "Tracking turns guesses into facts.",
+    },
+    {
+      question: "A good money goal should be what?",
+      options: ["Specific and measurable", "Secret and vague", "Impossible", "Based only on friends"],
+      correctAnswer: "Specific and measurable",
+      explanation: "Clear goals are easier to plan and finish.",
+    },
+    {
+      question: "Which habit helps most over time?",
+      options: ["Small consistent actions", "One random big action", "Avoiding balances", "Spending under pressure"],
+      correctAnswer: "Small consistent actions",
+      explanation: "Tiny repeatable habits compound into real progress.",
+    },
+  ],
+  Budgeting: [
+    {
+      question: "What is the purpose of a budget?",
+      options: ["Plan where money goes", "Stop all fun", "Hide spending", "Guarantee riches"],
+      correctAnswer: "Plan where money goes",
+      explanation: "Budgets help you choose spending before money is gone.",
+    },
+    {
+      question: "What does 'needs' usually mean?",
+      options: ["Important basics", "Every impulse buy", "Only video games", "Secret savings"],
+      correctAnswer: "Important basics",
+      explanation: "Needs are essentials such as food, transport, and school supplies.",
+    },
+    {
+      question: "What is an emergency fund for?",
+      options: ["Unexpected important costs", "Random snacks", "Risky bets", "Gift cards"],
+      correctAnswer: "Unexpected important costs",
+      explanation: "Emergency funds protect plans from surprises.",
+    },
+    {
+      question: "What should you do if a budget fails?",
+      options: ["Adjust it", "Quit forever", "Spend everything", "Stop tracking"],
+      correctAnswer: "Adjust it",
+      explanation: "Budgets improve when you update them with real life.",
+    },
+    {
+      question: "What does saving first mean?",
+      options: ["Move savings before spending wants", "Save only leftovers", "Avoid all spending", "Borrow to save"],
+      correctAnswer: "Move savings before spending wants",
+      explanation: "Paying yourself first protects your goal.",
+    },
+  ],
+  Investing: [
+    {
+      question: "What is compound interest?",
+      options: ["Interest earning interest", "Free money with no risk", "A bank password", "A spending rule"],
+      correctAnswer: "Interest earning interest",
+      explanation: "Compounding grows because interest becomes part of the balance.",
+    },
+    {
+      question: "Why does starting early help?",
+      options: ["More time for compounding", "No investment can fall", "Fees disappear", "Taxes stop forever"],
+      correctAnswer: "More time for compounding",
+      explanation: "Time gives growth more rounds to build.",
+    },
+    {
+      question: "What does diversification do?",
+      options: ["Spreads risk", "Buys only one stock", "Removes every risk", "Stops learning"],
+      correctAnswer: "Spreads risk",
+      explanation: "Diversification reduces dependence on one outcome.",
+    },
+    {
+      question: "Higher potential reward usually means what?",
+      options: ["Higher risk", "Guaranteed success", "No downside", "No need to research"],
+      correctAnswer: "Higher risk",
+      explanation: "More upside usually comes with more uncertainty.",
+    },
+    {
+      question: "Which money should usually stay safe?",
+      options: ["Emergency fund", "Long-term extra savings", "Money for a 20-year goal", "A tiny practice amount"],
+      correctAnswer: "Emergency fund",
+      explanation: "Emergency money needs quick access and stability.",
+    },
+  ],
+  "Credit & Debt": [
+    {
+      question: "What is credit?",
+      options: ["Borrowed money to repay", "Free money", "A savings badge", "A scam every time"],
+      correctAnswer: "Borrowed money to repay",
+      explanation: "Credit lets you use money now and repay under agreed rules.",
+    },
+    {
+      question: "Which habit helps credit health?",
+      options: ["Pay on time", "Miss payments", "Max out cards", "Apply everywhere"],
+      correctAnswer: "Pay on time",
+      explanation: "On-time payments are a major reliability signal.",
+    },
+    {
+      question: "What is interest on debt?",
+      options: ["The cost of borrowing", "A reward", "A discount", "A free upgrade"],
+      correctAnswer: "The cost of borrowing",
+      explanation: "Interest is what borrowing can cost over time.",
+    },
+    {
+      question: "Avalanche payoff targets which debt first?",
+      options: ["Highest interest", "Smallest color", "Newest app", "Random bill"],
+      correctAnswer: "Highest interest",
+      explanation: "Paying expensive debt first can reduce total cost.",
+    },
+    {
+      question: "Why avoid maxing out a card?",
+      options: ["It can look risky and cost interest", "It guarantees prizes", "It improves all scores", "It deletes debt"],
+      correctAnswer: "It can look risky and cost interest",
+      explanation: "High balances can signal stress and create larger interest costs.",
+    },
+  ],
+  Scams: [
+    {
+      question: "What is phishing?",
+      options: ["Fake messages trying to steal info", "A budgeting method", "A savings account", "A safe prize"],
+      correctAnswer: "Fake messages trying to steal info",
+      explanation: "Phishing impersonates trusted sources to get private information.",
+    },
+    {
+      question: "Which scam sign is common?",
+      options: ["Urgent pressure", "Clear terms", "Official app login", "Normal receipt"],
+      correctAnswer: "Urgent pressure",
+      explanation: "Pressure makes people act before they verify.",
+    },
+    {
+      question: "What should you do with suspicious links?",
+      options: ["Open the official app yourself", "Click quickly", "Enter a code", "Forward to strangers"],
+      correctAnswer: "Open the official app yourself",
+      explanation: "Going directly to the official source avoids fake pages.",
+    },
+    {
+      question: "Which request is dangerous?",
+      options: ["Share a one-time code", "Read a receipt", "Compare prices", "Ask a trusted adult"],
+      correctAnswer: "Share a one-time code",
+      explanation: "One-time codes can let scammers enter your account.",
+    },
+    {
+      question: "What should you do before paying a surprise prize fee?",
+      options: ["Stop and verify", "Pay with gift cards", "Hide it", "Send bank details"],
+      correctAnswer: "Stop and verify",
+      explanation: "Surprise prize fees are a classic scam pattern.",
+    },
+  ],
+};
+
+const lessonBlueprints: Record<
+  SectionName,
+  { title: string; description: string; type: LessonType; content: string[]; example: string; encouragement: string }[]
+> = {
+  Basics: [
+    {
+      title: "Meet Your Money",
+      type: "lesson",
+      description: "Learn the simple idea behind income, spending, and saving.",
+      content: [
+        "Money has jobs. It can help you buy what you need, enjoy things you want, prepare for surprises, and build future options.",
+        "The easiest way to feel in control is to know what comes in and where it goes.",
+      ],
+      example: "If you get $20, you might use $8 for lunch, $5 for fun, and $7 for a goal.",
+      encouragement: "Small choices count. You are already building money awareness.",
+    },
+    {
+      title: "Needs vs Wants",
+      type: "story",
+      description: "Help Mina choose between a bus pass and a limited-edition hoodie.",
+      content: [
+        "Needs are things that keep your day working. Wants are things that are nice but can wait.",
+        "A smart choice is not always boring. It is matching money to what matters most right now.",
+      ],
+      example: "Mina buys the bus pass today and saves for the hoodie over three weeks.",
+      encouragement: "That is a strong choice. Future you gets fewer money surprises.",
+    },
+    {
+      title: "Money Goal Sprint",
+      type: "challenge",
+      description: "Turn a wish into a goal with an amount and a date.",
+      content: [
+        "A goal needs three things: what you want, how much it costs, and when you want it.",
+        "When the goal is clear, your weekly savings target becomes obvious.",
+      ],
+      example: "$60 headphones in 6 weeks means saving $10 per week.",
+      encouragement: "Clear goals are powerful. You just made money less vague.",
+    },
+    {
+      title: "Spending Tracker",
+      type: "lesson",
+      description: "Use a tiny tracking habit to find money leaks.",
+      content: [
+        "Tracking does not mean judging yourself. It means noticing patterns.",
+        "Write down purchases for three days. You will usually spot one thing you can change.",
+      ],
+      example: "Three $4 drinks each week cost $12. Swapping one saves $4 without quitting everything.",
+      encouragement: "You found the pattern. That is how better habits start.",
+    },
+    {
+      title: "Basics Quiz",
+      type: "quiz",
+      description: "Check your new money vocabulary.",
+      content: ["Answer five fast questions. You will get feedback after every tap."],
+      example: "Remember: income comes in, expenses go out, goals guide choices.",
+      encouragement: "Quizzes are practice, not judgment. Go for it.",
+    },
+    {
+      title: "Basics Review",
+      type: "review",
+      description: "Lock in the key ideas before moving to budgeting.",
+      content: [
+        "Review sessions make memory stronger because your brain has to retrieve the idea again.",
+        "You are building a base for every future money skill.",
+      ],
+      example: "Need, want, goal, trade-off, and tracking are the five starter tools.",
+      encouragement: "Basics complete. Your financial confidence just leveled up.",
+    },
+  ],
+  Budgeting: [
+    {
+      title: "Budget Builder",
+      type: "lesson",
+      description: "Give every dollar a job before the week starts.",
+      content: [
+        "A budget is a plan, not a punishment. It helps your money support your life.",
+        "Start with income, then split it between needs, wants, savings, and goals.",
+      ],
+      example: "$50 can become $25 needs, $15 wants, and $10 savings.",
+      encouragement: "Planning ahead is a money superpower.",
+    },
+    {
+      title: "The 50/30/20 Story",
+      type: "story",
+      description: "Watch Jay balance lunch, fun, and a savings target.",
+      content: [
+        "The 50/30/20 rule is a beginner-friendly guide: 50% needs, 30% wants, 20% savings.",
+        "It is flexible. If your needs are lower, you can save more.",
+      ],
+      example: "Jay earns $100 and saves $25 because school lunch is already covered.",
+      encouragement: "Rules are guides. Smart savers adjust them.",
+    },
+    {
+      title: "Emergency Fund",
+      type: "lesson",
+      description: "Build a small safety cushion for surprise costs.",
+      content: [
+        "An emergency fund is money set aside for unexpected important costs.",
+        "Start tiny. Even $50 can prevent a bad week from becoming a debt problem.",
+      ],
+      example: "$5 saved every Friday becomes $100 in 20 weeks.",
+      encouragement: "A small buffer can create a big calm feeling.",
+    },
+    {
+      title: "Budget Rescue",
+      type: "challenge",
+      description: "Fix a weekly budget that went off track.",
+      content: [
+        "Budgets fail when they are too strict or too vague.",
+        "A rescue plan moves money between categories without abandoning the goal.",
+      ],
+      example: "Overspent $6 on snacks? Move $6 from entertainment instead of touching savings.",
+      encouragement: "Adjusting is not failing. It is how real budgets work.",
+    },
+    {
+      title: "Budget Quiz",
+      type: "quiz",
+      description: "Prove you can spot good budget decisions.",
+      content: ["Tap the best answer and learn why immediately."],
+      example: "A strong budget has room for needs, wants, and future goals.",
+      encouragement: "You are ready to test your budgeting instincts.",
+    },
+    {
+      title: "Budget Review",
+      type: "review",
+      description: "Refresh your budget strategy before investing basics.",
+      content: [
+        "Budgeting creates money available for goals.",
+        "Without a budget, investing and saving are much harder to repeat.",
+      ],
+      example: "A monthly budget turns random leftovers into planned progress.",
+      encouragement: "Smart Saver energy unlocked.",
+    },
+  ],
+  Investing: [
+    {
+      title: "Investing Basics",
+      type: "lesson",
+      description: "Understand what investing is and why time matters.",
+      content: [
+        "Investing means buying assets that may grow in value over time.",
+        "It is different from saving because investing can go up or down.",
+      ],
+      example: "A broad stock fund owns small pieces of many companies.",
+      encouragement: "You do not need to be rich to understand investing.",
+    },
+    {
+      title: "Compound Growth",
+      type: "lesson",
+      description: "See how interest can earn more interest.",
+      content: [
+        "Compound interest is growth on your original money plus growth on past growth.",
+        "The formula is A = P(1 + r/n)^(nt), but the big idea is simple: time helps.",
+      ],
+      example: "$200 at 6% for 10 years grows to about $364 with monthly compounding.",
+      encouragement: "Time is one of the strongest investing tools.",
+    },
+    {
+      title: "Risk and Reward",
+      type: "story",
+      description: "Help Leo avoid chasing a hype investment.",
+      content: [
+        "Higher possible reward usually comes with higher risk.",
+        "A long-term plan beats random hype because it survives bad weeks.",
+      ],
+      example: "Leo chooses a diversified fund instead of putting everything into one viral stock.",
+      encouragement: "Calm beats hype. That is investor thinking.",
+    },
+    {
+      title: "Diversify It",
+      type: "challenge",
+      description: "Pick the less risky mix of investments.",
+      content: [
+        "Diversification means spreading money across different investments.",
+        "If one thing struggles, the whole plan is less likely to break.",
+      ],
+      example: "Owning 500 companies is usually less risky than owning only one.",
+      encouragement: "You are learning how investors manage uncertainty.",
+    },
+    {
+      title: "Investing Quiz",
+      type: "quiz",
+      description: "Check your investing fundamentals.",
+      content: ["Answer questions about compounding, risk, and diversification."],
+      example: "Investing can build wealth, but emergency money should usually stay safe.",
+      encouragement: "Investor mode is loading.",
+    },
+    {
+      title: "Investing Review",
+      type: "review",
+      description: "Practice the core ideas before credit and debt.",
+      content: [
+        "Investing is a long-term tool. It works best with patience, diversification, and realistic expectations.",
+        "You should understand risk before chasing reward.",
+      ],
+      example: "A steady plan can beat an exciting guess.",
+      encouragement: "You are thinking like a long-term builder.",
+    },
+  ],
+  "Credit & Debt": [
+    {
+      title: "Credit Score Decoder",
+      type: "lesson",
+      description: "Learn what a credit score signals.",
+      content: [
+        "A credit score helps lenders estimate how likely you are to repay borrowed money.",
+        "Paying on time and keeping balances low are two strong habits.",
+      ],
+      example: "A $50 balance on a $500 limit looks healthier than a $480 balance.",
+      encouragement: "Credit is a tool. You are learning how to hold it safely.",
+    },
+    {
+      title: "Borrowing Story",
+      type: "story",
+      description: "Help Sam choose between waiting, saving, or borrowing.",
+      content: [
+        "Borrowing can solve a short-term problem but creates a future payment.",
+        "The question is not only 'can I buy it?' but 'can I repay it comfortably?'",
+      ],
+      example: "Sam waits two weeks and avoids paying interest on a small purchase.",
+      encouragement: "Future payments matter. You spotted the trade-off.",
+    },
+    {
+      title: "Interest Costs",
+      type: "lesson",
+      description: "Understand why debt can grow.",
+      content: [
+        "Interest is the cost of borrowing money.",
+        "If you pay only a tiny amount, interest can keep the debt around for much longer.",
+      ],
+      example: "A $100 debt at high interest can cost far more than $100 if paid slowly.",
+      encouragement: "Understanding interest keeps debt from surprising you.",
+    },
+    {
+      title: "Debt Payoff Challenge",
+      type: "challenge",
+      description: "Choose snowball or avalanche payoff strategy.",
+      content: [
+        "Snowball pays the smallest balance first for motivation.",
+        "Avalanche pays the highest interest first to reduce total cost.",
+      ],
+      example: "A 24% card usually deserves attention before an 8% loan.",
+      encouragement: "You can now compare payoff strategies clearly.",
+    },
+    {
+      title: "Credit Quiz",
+      type: "quiz",
+      description: "Practice safe borrowing decisions.",
+      content: ["Answer five questions about credit, debt, and interest."],
+      example: "Good credit habits are built one payment at a time.",
+      encouragement: "You have the tools. Tap your best answer.",
+    },
+    {
+      title: "Credit Review",
+      type: "review",
+      description: "Review credit habits before scam awareness.",
+      content: [
+        "Credit can help or hurt depending on how it is used.",
+        "On-time payment, low balances, and careful borrowing are the core habits.",
+      ],
+      example: "Borrowing less than you can afford is often safer than borrowing the maximum.",
+      encouragement: "Money Master discipline is showing.",
+    },
+  ],
+  Scams: [
+    {
+      title: "Phishing Defense",
+      type: "lesson",
+      description: "Spot fake messages before they steal details.",
+      content: [
+        "Phishing is when scammers pretend to be trusted companies or people.",
+        "They often use urgent threats, fake links, and requests for codes.",
+      ],
+      example: "A fake bank text says your account closes in 10 minutes unless you click.",
+      encouragement: "Pause and verify. That habit protects you.",
+    },
+    {
+      title: "Prize Trap Story",
+      type: "story",
+      description: "Help Ava avoid a fake gift card prize.",
+      content: [
+        "Scams often promise a big reward after a small payment.",
+        "Real prizes do not usually ask for gift cards, crypto, or secret fees.",
+      ],
+      example: "Ava ignores the message and checks the official website instead.",
+      encouragement: "You chose verification over pressure.",
+    },
+    {
+      title: "Red Flag Hunt",
+      type: "challenge",
+      description: "Find the warning signs in a suspicious offer.",
+      content: [
+        "Red flags include urgency, secrecy, guaranteed returns, and requests for private codes.",
+        "The more red flags you see, the slower you should move.",
+      ],
+      example: "Guaranteed profit today plus a crypto payment request is a serious warning.",
+      encouragement: "Scam radar activated.",
+    },
+    {
+      title: "Safe Verification",
+      type: "lesson",
+      description: "Learn how to check a message safely.",
+      content: [
+        "Do not use links inside suspicious messages.",
+        "Open the official app or website yourself, then contact support if needed.",
+      ],
+      example: "Type your bank website manually instead of tapping a text link.",
+      encouragement: "Safe verification is simple and powerful.",
+    },
+    {
+      title: "Scam Quiz",
+      type: "quiz",
+      description: "Test your scam detection reflexes.",
+      content: ["Answer questions about phishing, pressure, prizes, and safe actions."],
+      example: "When money is urgent and secret, slow down.",
+      encouragement: "Your scam shield is ready.",
+    },
+    {
+      title: "Scams Review",
+      type: "review",
+      description: "Finish the path by reviewing financial safety habits.",
+      content: [
+        "The safest people are not paranoid. They are patient and verify important messages.",
+        "Scammers want speed. Your advantage is slowing down.",
+      ],
+      example: "A trusted adult, official app, or official support page can help verify.",
+      encouragement: "Financial Legend behavior unlocked.",
+    },
+  ],
+};
+
+function createLesson(section: SectionName, blueprintIndex: number, globalOrder: number): Lesson {
+  const blueprint = lessonBlueprints[section][blueprintIndex];
+  const slug = `${section}-${blueprint.title}`
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  return {
+    id: slug,
+    section,
+    order: globalOrder,
+    difficulty: globalOrder < 15 ? "Beginner" : "Intermediate",
+    duration: blueprint.type === "quiz" || blueprint.type === "challenge" ? "3 min" : "2 min",
+    questions: sectionQuestions[section],
+    ...blueprint,
+  };
+}
+
+let order = 1;
+
+export const pathSections: PathSection[] = (Object.keys(lessonBlueprints) as SectionName[]).map((section) => ({
+  id: section.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+  name: section,
+  subtitle: sectionMeta[section].subtitle,
+  color: sectionMeta[section].color,
+  icon: sectionMeta[section].icon,
+  lessons: lessonBlueprints[section].map((_, index) => createLesson(section, index, order++)),
+}));
+
+export const lessons = pathSections.flatMap((section) => section.lessons);
+
+export const typeMeta = typeDetails;
+
+export function getLessonById(id: string) {
+  return lessons.find((lesson) => lesson.id === id) ?? lessons[0];
+}
+
+export function getNextLessonId(currentId: string) {
+  const currentIndex = lessons.findIndex((lesson) => lesson.id === currentId);
+  return currentIndex >= 0 ? lessons[currentIndex + 1]?.id : undefined;
+}
 
 export function getLevel(xp: number) {
   return levelThresholds.find((level) => xp >= level.minXp && xp <= level.maxXp) ?? levelThresholds[0];
@@ -44,314 +598,3 @@ export function getLevel(xp: number) {
 export function getNextLevel(xp: number) {
   return levelThresholds.find((level) => level.minXp > xp);
 }
-
-export const lessons: Lesson[] = [
-  {
-    id: "budget-blueprint",
-    title: "Build a Budget Blueprint",
-    category: "Budgeting",
-    difficulty: "Beginner",
-    duration: "2 min",
-    summary: "Turn allowance, part-time income, and spending into a plan you can actually follow.",
-    accent: "cyan",
-    body: [
-      "A budget is not a restriction. It is a map for your money before the week starts.",
-      "Start with money coming in, then split it into needs, wants, saving, and giving or goals. The point is to choose on purpose instead of guessing at the checkout screen.",
-      "A simple student budget can use 50% for needs, 30% for wants, and 20% for saving. If your needs are low, move more into saving or a future goal.",
-    ],
-    example:
-      "You earn $80 tutoring. You set aside $16 for savings, $24 for games and snacks, and $40 for transport, lunch, and school supplies. Now every dollar has a job.",
-    takeaways: ["Track income first", "Give every dollar a job", "Adjust weekly instead of quitting"],
-    questions: [
-      {
-        question: "What is the main purpose of a budget?",
-        options: ["To stop all fun spending", "To plan where money goes", "To hide spending", "To borrow more money"],
-        correctAnswer: "To plan where money goes",
-        explanation: "A budget helps you make decisions before you spend, not after.",
-      },
-      {
-        question: "In a 50/30/20 budget, what does the 20 usually represent?",
-        options: ["Debt only", "Taxes", "Saving or goals", "Entertainment"],
-        correctAnswer: "Saving or goals",
-        explanation: "The 20% bucket is often used for saving, investing, or paying down debt.",
-      },
-      {
-        question: "What should you do if your budget does not work the first week?",
-        options: ["Quit budgeting", "Adjust it", "Ignore it", "Spend everything early"],
-        correctAnswer: "Adjust it",
-        explanation: "Budgets improve through small adjustments as you learn your real habits.",
-      },
-    ],
-  },
-  {
-    id: "emergency-starter",
-    title: "Start an Emergency Fund",
-    category: "Budgeting",
-    difficulty: "Beginner",
-    duration: "1 min",
-    summary: "Create a small money buffer so surprise costs do not become panic moments.",
-    accent: "mint",
-    body: [
-      "An emergency fund is money reserved for unexpected but important costs: a broken phone screen, bus pass, medication, or urgent school supplies.",
-      "The first target is small: $100 or one week of typical spending. Small buffers protect your plans and reduce the need to borrow.",
-      "Keep emergency money separate from everyday spending so it does not disappear into normal purchases.",
-    ],
-    example:
-      "If you save $5 every Friday, you will have $100 in 20 weeks. That is enough to handle many student-level surprises without asking for a loan.",
-    takeaways: ["Start with a tiny target", "Keep it separate", "Use it only for real surprises"],
-    questions: [
-      {
-        question: "What is an emergency fund for?",
-        options: ["Random shopping", "Unexpected important costs", "Buying risky stocks", "Monthly subscriptions"],
-        correctAnswer: "Unexpected important costs",
-        explanation: "Emergency funds are for surprise costs that matter.",
-      },
-      {
-        question: "Why keep emergency money separate?",
-        options: ["So it earns no money", "So it is harder to spend by accident", "So friends can use it", "So it replaces a budget"],
-        correctAnswer: "So it is harder to spend by accident",
-        explanation: "Separation creates friction and protects the money for real emergencies.",
-      },
-      {
-        question: "What is a good first emergency fund goal for many students?",
-        options: ["One million dollars", "$100 or one week of spending", "A new console", "All future rent"],
-        correctAnswer: "$100 or one week of spending",
-        explanation: "A small realistic target builds momentum.",
-      },
-    ],
-  },
-  {
-    id: "compound-interest",
-    title: "Compound Interest Power",
-    category: "Investing",
-    difficulty: "Beginner",
-    duration: "2 min",
-    summary: "See how money can grow when interest earns interest over time.",
-    accent: "mint",
-    body: [
-      "Compound interest means your money earns interest, then that interest can earn more interest too.",
-      "Time matters more than most beginners expect. Starting early gives compounding more rounds to work.",
-      "The formula is A = P(1 + r/n)^(nt), where P is starting money, r is the annual rate, n is compounding frequency, and t is time in years.",
-    ],
-    example:
-      "If $200 grows at 6% for 10 years, it becomes about $364 with monthly compounding. You added no extra money, but time did work.",
-    takeaways: ["Interest can earn interest", "Time is powerful", "Higher return usually means higher risk"],
-    questions: [
-      {
-        question: "What makes compound interest different from simple interest?",
-        options: ["It only works for banks", "Interest can earn more interest", "It removes risk", "It always doubles money monthly"],
-        correctAnswer: "Interest can earn more interest",
-        explanation: "Compounding grows the base that future interest is calculated from.",
-      },
-      {
-        question: "Which variable means time in the compound interest formula?",
-        options: ["P", "r", "n", "t"],
-        correctAnswer: "t",
-        explanation: "In A = P(1 + r/n)^(nt), t is the number of years.",
-      },
-      {
-        question: "Why is starting early helpful?",
-        options: ["It guarantees no losses", "It gives compounding more time", "It avoids all taxes", "It means you never need to save"],
-        correctAnswer: "It gives compounding more time",
-        explanation: "More time means more compounding periods.",
-      },
-    ],
-  },
-  {
-    id: "risk-reward",
-    title: "Risk and Reward Basics",
-    category: "Investing",
-    difficulty: "Beginner",
-    duration: "2 min",
-    summary: "Learn why higher potential returns usually come with more uncertainty.",
-    accent: "cyan",
-    body: [
-      "Investing is using money to buy something that may grow in value, such as a stock fund or bond.",
-      "Risk is the chance that the outcome is worse than expected. Reward is the possible gain for taking that risk.",
-      "A smart beginner does not chase hype. They diversify, think long term, and avoid money they need soon.",
-    ],
-    example:
-      "Putting all your savings into one trending stock is risky. A broad index fund spreads money across many companies, which reduces the damage if one company struggles.",
-    takeaways: ["No return is guaranteed", "Diversification spreads risk", "Invest long-term money, not emergency money"],
-    questions: [
-      {
-        question: "What does diversification mean?",
-        options: ["Buying only one company", "Spreading money across different investments", "Avoiding all investing", "Borrowing to invest"],
-        correctAnswer: "Spreading money across different investments",
-        explanation: "Diversification reduces dependence on one outcome.",
-      },
-      {
-        question: "Which money should usually not be invested in risky assets?",
-        options: ["Emergency fund money", "Long-term money", "Extra savings", "Money for a goal 10 years away"],
-        correctAnswer: "Emergency fund money",
-        explanation: "Emergency money needs to be available and stable.",
-      },
-      {
-        question: "Higher potential reward usually comes with what?",
-        options: ["Zero risk", "More uncertainty", "Guaranteed income", "No need to learn"],
-        correctAnswer: "More uncertainty",
-        explanation: "More possible upside often means more possible downside.",
-      },
-    ],
-  },
-  {
-    id: "credit-score",
-    title: "Credit Score Decoder",
-    category: "Credit and Debt",
-    difficulty: "Beginner",
-    duration: "2 min",
-    summary: "Understand what a credit score signals and how good habits protect it.",
-    accent: "violet",
-    body: [
-      "A credit score is a number lenders use to estimate how likely you are to repay borrowed money.",
-      "The biggest habits are paying on time, keeping balances low, and not applying for too much credit at once.",
-      "Credit can help with apartments, phones, cars, and loans later, but only if you treat it like a tool rather than free money.",
-    ],
-    example:
-      "If your card limit is $500 and you owe $450, lenders may see that as risky. If you owe $50 and pay on time, that looks healthier.",
-    takeaways: ["Pay on time", "Keep balances low", "Credit is borrowed money"],
-    questions: [
-      {
-        question: "What does a credit score estimate?",
-        options: ["Your school grades", "Your repayment reliability", "Your salary exactly", "Your shopping taste"],
-        correctAnswer: "Your repayment reliability",
-        explanation: "Credit scores help lenders judge repayment risk.",
-      },
-      {
-        question: "Which habit usually helps credit?",
-        options: ["Paying late", "Maxing out cards", "Paying on time", "Opening many accounts quickly"],
-        correctAnswer: "Paying on time",
-        explanation: "On-time payments are one of the strongest credit habits.",
-      },
-      {
-        question: "A credit card is best understood as what?",
-        options: ["Free money", "Borrowed money", "A guaranteed investment", "A coupon"],
-        correctAnswer: "Borrowed money",
-        explanation: "You must repay credit card spending.",
-      },
-    ],
-  },
-  {
-    id: "debt-snowball",
-    title: "Debt Payoff Game Plan",
-    category: "Credit and Debt",
-    difficulty: "Beginner",
-    duration: "2 min",
-    summary: "Compare debt snowball and avalanche methods for paying debt faster.",
-    accent: "violet",
-    body: [
-      "Debt costs money when interest is added. A payoff plan helps you attack balances instead of only reacting to bills.",
-      "The snowball method pays the smallest balance first for quick wins. The avalanche method pays the highest interest rate first to reduce total cost.",
-      "Both methods work better when you stop adding new debt during the payoff plan.",
-    ],
-    example:
-      "If you owe $40 to a friend, $200 on a card at 20%, and $500 on a loan at 8%, avalanche targets the card first because it is most expensive.",
-    takeaways: ["Interest makes debt grow", "Snowball creates momentum", "Avalanche can save more money"],
-    questions: [
-      {
-        question: "Which debt does the avalanche method target first?",
-        options: ["Smallest balance", "Highest interest rate", "Newest purchase", "Random account"],
-        correctAnswer: "Highest interest rate",
-        explanation: "Avalanche focuses on reducing the most expensive debt first.",
-      },
-      {
-        question: "Why do people use the snowball method?",
-        options: ["It creates quick wins", "It ignores balances", "It increases interest", "It requires no payments"],
-        correctAnswer: "It creates quick wins",
-        explanation: "Paying small balances first can build motivation.",
-      },
-      {
-        question: "What makes debt more expensive over time?",
-        options: ["Budgeting", "Interest", "Saving", "Coupons"],
-        correctAnswer: "Interest",
-        explanation: "Interest is the cost of borrowing.",
-      },
-    ],
-  },
-  {
-    id: "phishing-defense",
-    title: "Phishing Defense",
-    category: "Scams",
-    difficulty: "Beginner",
-    duration: "2 min",
-    summary: "Spot fake messages before they steal passwords or payment details.",
-    accent: "amber",
-    body: [
-      "Phishing is when a scammer pretends to be a trusted person or company to get private information.",
-      "Warning signs include urgent threats, weird links, spelling mistakes, requests for codes, and prizes you did not enter.",
-      "When unsure, do not click. Open the official app or website yourself and check there.",
-    ],
-    example:
-      "A text says your bank account will close in 10 minutes unless you click a link. The safer move is to ignore the link and contact the bank through its official app.",
-    takeaways: ["Urgency is a red flag", "Never share one-time codes", "Use official apps or websites"],
-    questions: [
-      {
-        question: "What is phishing?",
-        options: ["A savings method", "A scam that impersonates trusted sources", "A budget category", "A type of legal investment"],
-        correctAnswer: "A scam that impersonates trusted sources",
-        explanation: "Phishing tricks people into giving away private information.",
-      },
-      {
-        question: "What should you do with a suspicious bank link?",
-        options: ["Click immediately", "Share it with friends", "Open the official bank app instead", "Reply with your password"],
-        correctAnswer: "Open the official bank app instead",
-        explanation: "Going directly to the official source avoids fake links.",
-      },
-      {
-        question: "Which request is a major red flag?",
-        options: ["Asking for a one-time login code", "Showing your balance in an official app", "Sending a receipt", "Providing customer support hours"],
-        correctAnswer: "Asking for a one-time login code",
-        explanation: "Scammers use one-time codes to access accounts.",
-      },
-    ],
-  },
-  {
-    id: "too-good-to-be-true",
-    title: "Too-Good-To-Be-True Detector",
-    category: "Scams",
-    difficulty: "Beginner",
-    duration: "1 min",
-    summary: "Learn how fake prizes, guaranteed returns, and pressure tactics work.",
-    accent: "amber",
-    body: [
-      "Many scams use excitement and pressure so you act before thinking.",
-      "Promises like guaranteed high returns, free money after paying a fee, or secret opportunities are warning signs.",
-      "A simple rule: if the reward is huge, urgent, and requires secrecy or payment first, slow down and verify.",
-    ],
-    example:
-      "Someone says you won a $500 gift card but must pay a $20 processing fee today. Real prizes do not require surprise fees through gift cards or crypto.",
-    takeaways: ["Pause when pressured", "Guaranteed high returns are suspicious", "Never pay fees to receive a surprise prize"],
-    questions: [
-      {
-        question: "Which phrase is suspicious?",
-        options: ["Read the terms", "Guaranteed high return today", "Save before spending", "Track your income"],
-        correctAnswer: "Guaranteed high return today",
-        explanation: "Guaranteed high returns with urgency are a common scam pattern.",
-      },
-      {
-        question: "Why do scammers create urgency?",
-        options: ["To help you budget", "To stop you from thinking clearly", "To lower prices honestly", "To teach investing"],
-        correctAnswer: "To stop you from thinking clearly",
-        explanation: "Pressure pushes people to act before verifying.",
-      },
-      {
-        question: "What is safer when a surprise prize asks for a fee?",
-        options: ["Pay quickly", "Send gift cards", "Verify independently or ignore it", "Share your password"],
-        correctAnswer: "Verify independently or ignore it",
-        explanation: "Legitimate prizes do not need suspicious upfront payments.",
-      },
-    ],
-  },
-];
-
-export const featuredLesson = lessons[0];
-
-export function getLessonById(id: string) {
-  return lessons.find((lesson) => lesson.id === id) ?? featuredLesson;
-}
-
-export function getLessonsByCategory(category: Category) {
-  return lessons.filter((lesson) => lesson.category === category);
-}
-
-export const categories = Object.keys(categoryStyles) as Category[];
