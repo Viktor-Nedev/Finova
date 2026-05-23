@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { getLevel, getNextLevel, lessons } from "../data/lessons";
+import { getLessonById, getLevel, getNextLevel, lessons } from "../data/lessons";
 import type { QuizResult, StreakState, XpEvent } from "../types";
 
 type FinovaStore = {
@@ -100,7 +100,8 @@ export const useFinovaStore = create<FinovaStore>()(
         const previousResult = state.quizResults[lessonId];
         const percent = total > 0 ? score / total : 0;
         const quizXp = Math.max(5, Math.round(percent * 20));
-        const lessonXp = state.completedLessons.includes(lessonId) ? 0 : 10;
+        const lesson = getLessonById(lessonId);
+        const lessonXp = state.completedLessons.includes(lessonId) ? 0 : lesson.xpReward;
         const improvedQuizXp = Math.max(0, quizXp - (previousResult?.quizXp ?? 0));
         const awardedXp = lessonXp + improvedQuizXp;
         const coinsEarned = Math.max(5, Math.round(awardedXp * 1.5));
@@ -167,7 +168,7 @@ export const useFinovaStore = create<FinovaStore>()(
       resetProgress: () => set(initialState),
     }),
     {
-      name: "finova-duolingo-state-v2",
+      name: "finova-duolingo-state-v3",
       partialize: (state) => ({
         xp: state.xp,
         coins: state.coins,

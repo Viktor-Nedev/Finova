@@ -1,20 +1,19 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../components/Button";
 import { ProgressBar } from "../components/ProgressBar";
 import { QuizCard } from "../components/QuizCard";
+import { getLessonById } from "../data/lessons";
 import { generateQuiz } from "../lib/ai";
 import { useFinovaStore } from "../state/useFinovaStore";
-import type { Lesson, QuizQuestion, View } from "../types";
+import type { QuizQuestion } from "../types";
 
-type QuizPageProps = {
-  lesson: Lesson;
-  onNavigate: (view: View) => void;
-  onComplete: (summary: { xp: number; coins: number; score: number; total: number }) => void;
-};
-
-export function QuizPage({ lesson, onNavigate, onComplete }: QuizPageProps) {
+export function QuizPage() {
+  const navigate = useNavigate();
+  const { lessonId = "" } = useParams();
+  const lesson = getLessonById(lessonId);
   const completeLesson = useFinovaStore((state) => state.completeLesson);
   const [questions, setQuestions] = useState<QuizQuestion[]>(lesson.questions);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -29,7 +28,7 @@ export function QuizPage({ lesson, onNavigate, onComplete }: QuizPageProps) {
       setLoading(true);
       const freshQuestions = await generateQuiz(`${lesson.title} ${lesson.section}`, lesson.difficulty);
       if (active) {
-        setQuestions(freshQuestions.length >= 5 ? freshQuestions : lesson.questions);
+        setQuestions(freshQuestions.length >= 5 ? freshQuestions.slice(0, 5) : lesson.questions);
         setCurrentIndex(0);
         setSelected("");
         setScore(0);
@@ -42,7 +41,7 @@ export function QuizPage({ lesson, onNavigate, onComplete }: QuizPageProps) {
     return () => {
       active = false;
     };
-  }, [lesson]);
+  }, [lesson.difficulty, lesson.id, lesson.questions, lesson.section, lesson.title]);
 
   const currentQuestion = questions[currentIndex];
   const isCorrect = selected === currentQuestion?.correctAnswer;
@@ -60,9 +59,11 @@ export function QuizPage({ lesson, onNavigate, onComplete }: QuizPageProps) {
 
   const next = () => {
     if (currentIndex === questions.length - 1) {
-      const finalScore = score + (isCorrect ? 0 : 0);
+      const finalScore = score;
       const reward = completeLesson(lesson.id, finalScore, questions.length);
-      onComplete({ xp: reward.awardedXp, coins: reward.coinsEarned, score: finalScore, total: questions.length });
+      navigate(`/complete/${lesson.id}`, {
+        state: { xp: reward.awardedXp, coins: reward.coinsEarned, score: finalScore, total: questions.length },
+      });
       return;
     }
 
@@ -72,11 +73,11 @@ export function QuizPage({ lesson, onNavigate, onComplete }: QuizPageProps) {
 
   if (loading) {
     return (
-      <div className="grid min-h-screen place-items-center bg-duo-sky p-4">
+      <div className="grid min-h-screen place-items-center bg-duo-bg p-4">
         <div className="duo-card max-w-md p-8 text-center">
-          <div className="mx-auto h-14 w-14 animate-spin rounded-full border-8 border-green-100 border-t-duo-green" />
+          <div className="mx-auto h-16 w-16 animate-spin rounded-full border-8 border-green-100 border-t-duo-green" />
           <h1 className="mt-5 text-2xl font-black text-slate-800">Building your quiz...</h1>
-          <p className="mt-2 font-bold text-slate-500">Finny is preparing five questions for this topic.</p>
+          <p className="mt-2 font-bold text-slate-500">Finny is preparing five questions for this node.</p>
         </div>
       </div>
     );
@@ -84,18 +85,18 @@ export function QuizPage({ lesson, onNavigate, onComplete }: QuizPageProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <header className="flex items-center gap-4 border-b-2 border-slate-100 px-4 py-4 sm:px-8">
-        <button className="icon-button" onClick={() => onNavigate("lesson")} aria-label="Back to lesson">
+      <header className="flex h-20 shrink-0 items-center gap-4 border-b-2 border-duo-gray px-4 sm:px-8">
+        <button className="icon-button" onClick={() => navigate(`/lesson/${lesson.id}`)} aria-label="Back to lesson">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <ProgressBar value={currentIndex + 1} max={questions.length} />
-        <button className="icon-button" onClick={() => onNavigate("map")} aria-label="Exit quiz">
+        <button className="icon-button" onClick={() => navigate("/")} aria-label="Exit quiz">
           <X className="h-5 w-5" />
         </button>
       </header>
 
-      <main className="flex flex-1 items-center bg-duo-sky px-4 py-8 sm:px-8">
-        <div className="mx-auto w-full max-w-5xl">
+      <main className="flex flex-1 items-center bg-duo-bg px-4 py-8 sm:px-8">
+        <div className="mx-auto w-full max-w-6xl">
           <AnimatePresence mode="wait">
             <QuizCard question={currentQuestion} selected={selected} onSelect={choose} />
           </AnimatePresence>
@@ -108,11 +109,9 @@ export function QuizPage({ lesson, onNavigate, onComplete }: QuizPageProps) {
             initial={{ y: 120 }}
             animate={{ y: 0 }}
             exit={{ y: 120 }}
-            className={`border-t-2 px-4 py-5 sm:px-8 ${
-              isCorrect ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"
-            }`}
+            className={`border-t-2 px-4 py-5 sm:px-8 ${isCorrect ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}
           >
-            <div className="mx-auto flex max-w-5xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className={`text-2xl font-black ${isCorrect ? "text-duo-green" : "text-duo-red"}`}>
                   {isCorrect ? "Correct!" : "Good try"}

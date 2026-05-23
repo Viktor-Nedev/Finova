@@ -78,7 +78,7 @@ export function AIChatBox() {
   };
 
   return (
-    <section className="flex h-[calc(100vh-7rem)] flex-col rounded-[2rem] border-2 border-slate-100 bg-white shadow-soft">
+    <section className="flex h-[calc(100vh-7.25rem)] flex-col rounded-[2rem] border-2 border-duo-gray bg-white shadow-soft">
       <div className="flex flex-col gap-4 border-b-2 border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <Mascot size="sm" message="Ask me anything about money." />
         <div className="flex flex-wrap items-center gap-2">

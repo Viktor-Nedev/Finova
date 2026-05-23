@@ -17,7 +17,7 @@ create table if not exists public.lessons (
   description text not null,
   section text not null check (section in ('Basics', 'Budgeting', 'Investing', 'Credit & Debt', 'Scams')),
   "order" integer not null,
-  type text not null check (type in ('lesson', 'quiz', 'challenge', 'story', 'review')),
+  type text not null check (type in ('lesson', 'quiz', 'story', 'review', 'speed', 'daily', 'boss', 'treasure', 'timed', 'game', 'ai')),
   content jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now()
 );

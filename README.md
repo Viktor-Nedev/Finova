@@ -1,6 +1,6 @@
 # Finova
 
-Finova is a full-screen Duolingo-style financial literacy app for students. The main experience is a playful map path where each completed node unlocks the next lesson.
+Finova is a full-screen Duolingo-style financial literacy platform for students. It uses a fixed left sidebar, dense central learning map, persistent right widgets, playful green/white/yellow styling, rounded cards, floating lesson nodes, rewards, quests, games, badges, progress tracking, wallet simulation, and an AI tutor.
 
 ## Run locally
 
@@ -9,30 +9,36 @@ npm install
 npm run dev
 ```
 
-The app works locally with `localStorage` progress and deterministic AI fallbacks. Add Supabase credentials to enable the Edge Function AI integration.
+The app runs locally with mock data, Zustand persistence, and deterministic AI fallbacks. Supabase and OpenAI can be connected through the included Edge Function.
 
-## Product Features
+## Included Pages
 
-- Full-screen green, white, and yellow learning map.
-- Bottom mobile navigation: Map, Learn, Review, Progress, Profile.
-- Top bar with avatar-style brand mark, XP, streak, coins, and AI Tutor access.
-- 30 sample map nodes across Basics, Budgeting, Investing, Credit & Debt, and Scams.
-- Lesson node types: lesson, quiz, challenge, story, and review.
-- Duolingo-style quiz flow with instant green/red feedback.
-- Lesson complete screen with mascot celebration, XP, coins, and confetti.
-- Progress page with XP, level, streak history, weekly chart, and category progress.
-- AI Tutor with simple explanations, real-life examples, mini exercises, mini quiz generation, and scam detection.
+- Map progression path
+- Classes
+- Quests
+- Daily Mission
+- Games
+- Leaderboards
+- News
+- Badges
+- Wallet Simulator
+- AI Tutor
+- Progress
+- Settings
+- Help & Support
+- Lesson, Quiz, and Completion flows
 
 ## Tech Stack
 
 - React + Vite
+- React Router
 - TailwindCSS
 - Framer Motion
-- Lucide React
 - Zustand
-- Supabase
-- OpenAI through a Supabase Edge Function
+- Lucide React
 - Recharts
+- Supabase
+- OpenAI through Supabase Edge Functions
 
 ## AI Setup
 
@@ -64,8 +70,8 @@ Run `supabase/schema.sql` to create:
 
 ## Gamification
 
-- Lesson completed: `+10 XP`
-- Quiz success: `+5 to +20 XP`
+- Lesson completed: node XP reward
+- Quiz success: score-based XP
 - Daily streak: `+5 XP`
-- Coins are awarded for activity and streak milestones.
-- Levels: Beginner, Smart Saver, Investor, Money Master, Financial Legend.
+- Gems/coins awarded for activity
+- Levels: Beginner, Smart Saver, Investor, Money Master, Financial Legend

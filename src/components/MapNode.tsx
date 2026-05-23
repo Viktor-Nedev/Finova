@@ -6,59 +6,51 @@ import type { Lesson, NodeState } from "../types";
 type MapNodeProps = {
   lesson: Lesson;
   state: NodeState;
-  side: "left" | "center" | "right";
+  lane: "left" | "center" | "right";
   onOpen: (lessonId: string) => void;
 };
 
-const sideClasses = {
-  left: "mr-auto ml-[8%] sm:ml-[18%]",
+const lanes = {
+  left: "mr-auto ml-[6%] sm:ml-[13%]",
   center: "mx-auto",
-  right: "ml-auto mr-[8%] sm:mr-[18%]",
+  right: "ml-auto mr-[6%] sm:mr-[13%]",
 };
 
-export function MapNode({ lesson, state, side, onOpen }: MapNodeProps) {
+export function MapNode({ lesson, state, lane, onOpen }: MapNodeProps) {
   const meta = typeMeta[lesson.type];
   const Icon = meta.icon;
-  const isLocked = state === "locked";
-  const isCompleted = state === "completed";
-  const isCurrent = state === "current";
-  const isSpecial = lesson.type !== "lesson";
-
-  const visualClass = isLocked
-    ? "border-slate-200 bg-slate-100 text-slate-400 shadow-[0_8px_0_#e2e8f0]"
-    : isCompleted
+  const locked = state === "locked";
+  const completed = state === "completed";
+  const current = state === "current";
+  const boss = lesson.type === "boss";
+  const sizeClass = boss ? "h-[6.8rem] w-[6.8rem] sm:h-32 sm:w-32" : "h-[5.8rem] w-[5.8rem] sm:h-28 sm:w-28";
+  const stateClass = locked
+    ? "border-slate-200 bg-slate-100 text-slate-400 shadow-[0_8px_0_#d1d5db]"
+    : completed
       ? "border-duo-green-dark bg-duo-green text-white shadow-[0_8px_0_#12813b]"
-      : isCurrent
-        ? "border-duo-yellow bg-white text-duo-green shadow-[0_8px_0_#fbbf24]"
-        : isSpecial
-          ? "border-duo-yellow bg-duo-yellow text-duo-brown shadow-[0_8px_0_#d89b11]"
-          : "border-duo-green bg-white text-duo-green shadow-[0_8px_0_#bbf7d0]";
+      : current
+        ? "border-duo-yellow bg-white text-duo-green shadow-[0_8px_0_#d89b11]"
+        : meta.nodeClass;
 
   return (
-    <div className={`relative flex w-full max-w-3xl ${sideClasses[side]}`}>
-      <div className="absolute left-1/2 top-20 h-16 w-2 -translate-x-1/2 rounded-full bg-slate-100" />
+    <div className={`relative flex w-full ${lanes[lane]}`}>
       <motion.button
-        className={`relative grid h-24 w-24 place-items-center rounded-full border-4 text-center transition hover:-translate-y-1 focus-visible:outline-duo-green sm:h-28 sm:w-28 ${visualClass}`}
-        whileHover={!isLocked ? { scale: 1.04 } : undefined}
-        animate={isCurrent ? { y: [0, -8, 0] } : undefined}
-        transition={isCurrent ? { duration: 1.4, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
-        onClick={() => !isLocked && onOpen(lesson.id)}
-        disabled={isLocked}
+        className={`relative grid ${sizeClass} place-items-center rounded-full border-[6px] transition hover:-translate-y-1 active:translate-y-1 active:shadow-none ${stateClass}`}
+        animate={current ? { y: [0, -9, 0] } : lesson.type === "treasure" ? { rotate: [-2, 2, -2] } : undefined}
+        transition={{ duration: current ? 1.3 : 2, repeat: current || lesson.type === "treasure" ? Infinity : 0, ease: "easeInOut" }}
+        disabled={locked}
+        onClick={() => !locked && onOpen(lesson.id)}
         aria-label={`${lesson.title}, ${state}`}
       >
-        {isLocked ? (
-          <LockKeyhole className="h-9 w-9" />
-        ) : isCompleted ? (
-          <Check className="h-11 w-11 stroke-[4]" />
-        ) : (
-          <Icon className="h-10 w-10 stroke-[3]" />
-        )}
-        {isCurrent && <span className="absolute -inset-3 rounded-full border-4 border-duo-yellow/70" />}
+        {locked ? <LockKeyhole className="h-9 w-9" /> : completed ? <Check className="h-12 w-12 stroke-[4]" /> : <Icon className="h-11 w-11 stroke-[3]" />}
+        {current && <span className="absolute -inset-4 rounded-full border-[7px] border-duo-yellow/70 animate-pulse" />}
+        {boss && <span className="absolute -top-4 rounded-full bg-duo-yellow px-3 py-1 text-xs font-black text-duo-brown">BOSS</span>}
       </motion.button>
-      <div className="ml-4 hidden max-w-56 self-center rounded-3xl border-2 border-slate-100 bg-white px-4 py-3 shadow-soft lg:block">
-        <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">{meta.label}</p>
-        <p className="mt-1 font-black leading-tight text-slate-800">{lesson.title}</p>
-        <p className="mt-1 text-xs font-bold text-duo-green">{meta.xpHint}</p>
+
+      <div className="ml-4 hidden self-center rounded-[1.4rem] border-2 border-duo-gray bg-white px-4 py-3 shadow-sm xl:block">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">{meta.label}</p>
+        <p className="mt-1 w-48 truncate font-black text-slate-800">{lesson.title}</p>
+        <p className="text-xs font-bold text-duo-green">{meta.xpHint}</p>
       </div>
     </div>
   );
