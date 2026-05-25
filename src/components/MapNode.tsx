@@ -48,9 +48,9 @@ export function MapNode({ lesson, state, lane, onOpen }: MapNodeProps) {
       </motion.button>
 
       <div className="ml-4 hidden self-center rounded-[1.4rem] border-2 border-duo-gray bg-white px-4 py-3 shadow-sm xl:block">
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">{meta.label}</p>
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Study first · {meta.label}</p>
         <p className="mt-1 w-48 truncate font-black text-slate-800">{lesson.title}</p>
-        <p className="text-xs font-bold text-duo-green">{meta.xpHint}</p>
+        <p className="text-xs font-bold text-duo-green">Lesson to practice to quiz</p>
       </div>
     </div>
   );

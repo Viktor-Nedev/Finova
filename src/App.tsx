@@ -11,10 +11,21 @@ import { LessonCompletePage } from "./pages/LessonCompletePage";
 import { LessonPage } from "./pages/LessonPage";
 import { MapPage } from "./pages/MapPage";
 import { NewsPage } from "./pages/NewsPage";
+import { NotebookPage } from "./pages/NotebookPage";
 import { ProgressPage } from "./pages/ProgressPage";
 import { QuestsPage } from "./pages/QuestsPage";
 import { QuizPage } from "./pages/QuizPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { FlashcardsPage } from "./pages/FlashcardsPage";
+import {
+  DailyRevisionPage,
+  FinanceDictionaryPage,
+  PracticeArenaPage,
+  RevisionCenterPage,
+  SavedLessonsPage,
+  StudyLibraryPage,
+  WeakTopicsPage,
+} from "./pages/StudyResourcePages";
 import { TutorPage } from "./pages/TutorPage";
 import { WalletPage } from "./pages/WalletPage";
 import { useFinovaStore } from "./state/useFinovaStore";
@@ -34,6 +45,15 @@ const router = createBrowserRouter([
       { path: "badges", element: <BadgesPage /> },
       { path: "wallet", element: <WalletPage /> },
       { path: "tutor", element: <TutorPage /> },
+      { path: "notebook", element: <NotebookPage /> },
+      { path: "flashcards", element: <FlashcardsPage /> },
+      { path: "revision", element: <RevisionCenterPage /> },
+      { path: "study-library", element: <StudyLibraryPage /> },
+      { path: "saved-lessons", element: <SavedLessonsPage /> },
+      { path: "practice-arena", element: <PracticeArenaPage /> },
+      { path: "weak-topics", element: <WeakTopicsPage /> },
+      { path: "daily-revision", element: <DailyRevisionPage /> },
+      { path: "dictionary", element: <FinanceDictionaryPage /> },
       { path: "progress", element: <ProgressPage /> },
       { path: "settings", element: <SettingsPage /> },
       { path: "help", element: <HelpPage /> },

@@ -48,6 +48,15 @@ export type View =
   | "badges"
   | "wallet"
   | "tutor"
+  | "notebook"
+  | "flashcards"
+  | "revision"
+  | "study-library"
+  | "saved-lessons"
+  | "practice-arena"
+  | "weak-topics"
+  | "daily-revision"
+  | "dictionary"
   | "progress"
   | "settings"
   | "help"
@@ -69,9 +78,67 @@ export type QuizQuestion = {
   explanation: string;
 };
 
+export type StudySection = {
+  id: string;
+  heading: string;
+  body: string[];
+  illustration: "coins" | "chart" | "notebook" | "shield" | "target" | "wallet";
+  highlight: string;
+};
+
+export type StudyExample = {
+  title: string;
+  setup: string;
+  result: string;
+};
+
+export type KeyTerm = {
+  term: string;
+  explanation: string;
+  example: string;
+};
+
+export type PracticeTask =
+  | {
+      id: string;
+      type: "multiple-choice" | "true-false";
+      prompt: string;
+      options: string[];
+      correctAnswer: string;
+      explanation: string;
+    }
+  | {
+      id: string;
+      type: "match";
+      prompt: string;
+      pairs: { left: string; right: string }[];
+      explanation: string;
+    }
+  | {
+      id: string;
+      type: "drag-order";
+      prompt: string;
+      items: string[];
+      correctOrder: string[];
+      explanation: string;
+    };
+
+export type StudyBookLesson = {
+  chapter: string;
+  readingTimeMinutes: number;
+  sections: StudySection[];
+  examples: StudyExample[];
+  importantTerms: KeyTerm[];
+  tips: string[];
+  summary: string[];
+  miniExercises: string[];
+  practiceTasks: PracticeTask[];
+};
+
 export type Lesson = {
   id: string;
   title: string;
+  chapter: string;
   description: string;
   section: SectionName;
   order: number;
@@ -82,6 +149,7 @@ export type Lesson = {
   content: string[];
   example: string;
   encouragement: string;
+  study: StudyBookLesson;
   questions: QuizQuestion[];
 };
 
@@ -101,6 +169,41 @@ export type QuizResult = {
   total: number;
   quizXp: number;
   completedAt: string;
+};
+
+export type StudyCompletion = {
+  progress: number;
+  readSectionIds: string[];
+  completedPracticeIds: string[];
+  quizUnlocked: boolean;
+  completedAt?: string;
+};
+
+export type NotebookNote = {
+  id: string;
+  title: string;
+  body: string;
+  className: SectionName;
+  lessonId?: string;
+  lessonTitle?: string;
+  pinned: boolean;
+  favorite: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Flashcard = {
+  id: string;
+  front: string;
+  back: string;
+  className: SectionName;
+  lessonId?: string;
+};
+
+export type DictionaryTerm = KeyTerm & {
+  id: string;
+  className: SectionName;
+  icon: LucideIcon;
 };
 
 export type XpEvent = {

@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, BookOpen, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../components/Button";
@@ -15,6 +15,7 @@ export function QuizPage() {
   const { lessonId = "" } = useParams();
   const lesson = getLessonById(lessonId);
   const completeLesson = useFinovaStore((state) => state.completeLesson);
+  const quizUnlocked = useFinovaStore((state) => state.isQuizUnlocked(lesson.id));
   const [questions, setQuestions] = useState<QuizQuestion[]>(lesson.questions);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selected, setSelected] = useState("");
@@ -22,6 +23,16 @@ export function QuizPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!quizUnlocked) {
+      navigate(`/lesson/${lesson.id}`, { replace: true });
+    }
+  }, [lesson.id, navigate, quizUnlocked]);
+
+  useEffect(() => {
+    if (!quizUnlocked) {
+      return;
+    }
+
     let active = true;
 
     async function loadQuiz() {
@@ -41,7 +52,7 @@ export function QuizPage() {
     return () => {
       active = false;
     };
-  }, [lesson.difficulty, lesson.id, lesson.questions, lesson.section, lesson.title]);
+  }, [lesson.difficulty, lesson.id, lesson.questions, lesson.section, lesson.title, quizUnlocked]);
 
   const currentQuestion = questions[currentIndex];
   const isCorrect = selected === currentQuestion?.correctAnswer;
@@ -70,6 +81,25 @@ export function QuizPage() {
     setCurrentIndex((index) => index + 1);
     setSelected("");
   };
+
+  if (!quizUnlocked) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-duo-bg p-4">
+        <div className="duo-card max-w-lg p-8 text-center">
+          <div className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-duo-soft text-duo-green">
+            <BookOpen className="h-8 w-8" />
+          </div>
+          <h1 className="mt-5 text-2xl font-black text-slate-800">Study lesson required</h1>
+          <p className="mt-2 font-bold leading-7 text-slate-500">
+            Finova quizzes unlock only after you read the lesson and complete the mini practice.
+          </p>
+          <Button className="mt-5" onClick={() => navigate(`/lesson/${lesson.id}`)}>
+            Go to Study Lesson
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

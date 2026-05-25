@@ -43,7 +43,7 @@ export function MapPage() {
             <p className="section-eyebrow">Main course</p>
             <h2 className="text-4xl font-black tracking-tight text-slate-800 sm:text-5xl">Money Mastery</h2>
             <p className="mt-2 max-w-3xl text-base font-bold text-slate-500">
-              Follow the green path from top to bottom. Finish each floating node to unlock the next finance skill.
+              Follow the green path from top to bottom. Every node starts with a study lesson, mini practice, and notes before the quiz unlocks.
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <div className="hero-stat">

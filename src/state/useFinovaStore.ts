@@ -1,18 +1,44 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { getLessonById, getLevel, getNextLevel, lessons } from "../data/lessons";
-import type { QuizResult, StreakState, XpEvent } from "../types";
+import type { NotebookNote, QuizResult, SectionName, StreakState, StudyCompletion, XpEvent } from "../types";
 
 type FinovaStore = {
   xp: number;
   coins: number;
   completedLessons: string[];
+  studiedLessons: Record<string, StudyCompletion>;
   quizResults: Record<string, QuizResult>;
+  notes: NotebookNote[];
+  savedLessons: string[];
+  difficultFlashcards: string[];
   streak: StreakState;
   xpHistory: XpEvent[];
   checkIn: () => void;
   completeLesson: (lessonId: string, score: number, total: number) => { awardedXp: number; coinsEarned: number };
   addXp: (amount: number, reason: string, coins?: number) => void;
+  markSectionRead: (lessonId: string, sectionId: string) => void;
+  completePracticeTask: (lessonId: string, taskId: string) => void;
+  completeStudyLesson: (lessonId: string) => void;
+  getStudyCompletion: (lessonId: string) => StudyCompletion;
+  isQuizUnlocked: (lessonId: string) => boolean;
+  createNote: (note: {
+    title: string;
+    body: string;
+    className: SectionName;
+    lessonId?: string;
+    lessonTitle?: string;
+    pinned?: boolean;
+    favorite?: boolean;
+  }) => string;
+  updateNote: (noteId: string, patch: Partial<Pick<NotebookNote, "title" | "body" | "className" | "lessonId" | "lessonTitle" | "pinned" | "favorite">>) => void;
+  deleteNote: (noteId: string) => void;
+  togglePinNote: (noteId: string) => void;
+  toggleFavoriteNote: (noteId: string) => void;
+  toggleSavedLesson: (lessonId: string) => void;
+  isLessonSaved: (lessonId: string) => boolean;
+  toggleDifficultFlashcard: (cardId: string) => void;
+  isFlashcardDifficult: (cardId: string) => boolean;
   isLessonCompleted: (lessonId: string) => boolean;
   isLessonUnlocked: (lessonId: string) => boolean;
   getCurrentLessonId: () => string;
@@ -30,7 +56,11 @@ const initialState = {
   xp: 0,
   coins: 50,
   completedLessons: [] as string[],
+  studiedLessons: {} as Record<string, StudyCompletion>,
   quizResults: {} as Record<string, QuizResult>,
+  notes: [] as NotebookNote[],
+  savedLessons: [] as string[],
+  difficultFlashcards: [] as string[],
   streak: initialStreak,
   xpHistory: [] as XpEvent[],
 };
@@ -55,6 +85,29 @@ function xpEvent(totalXp: number, amount: number, reason: string): XpEvent {
 
 function getLessonIndex(lessonId: string) {
   return lessons.findIndex((lesson) => lesson.id === lessonId);
+}
+
+function calculateStudyCompletion(lessonId: string, readSectionIds: string[], completedPracticeIds: string[]): StudyCompletion {
+  const lesson = getLessonById(lessonId);
+  const sectionIds = lesson.study.sections.map((section) => section.id);
+  const practiceIds = lesson.study.practiceTasks.map((task) => task.id);
+  const validReadSectionIds = readSectionIds.filter((id, index, all) => sectionIds.includes(id) && all.indexOf(id) === index);
+  const validPracticeIds = completedPracticeIds.filter((id, index, all) => practiceIds.includes(id) && all.indexOf(id) === index);
+  const totalSteps = Math.max(1, sectionIds.length + practiceIds.length);
+  const completedSteps = validReadSectionIds.length + validPracticeIds.length;
+  const quizUnlocked = validReadSectionIds.length === sectionIds.length && validPracticeIds.length === practiceIds.length;
+
+  return {
+    progress: quizUnlocked ? 100 : Math.round((completedSteps / totalSteps) * 100),
+    readSectionIds: validReadSectionIds,
+    completedPracticeIds: validPracticeIds,
+    quizUnlocked,
+    completedAt: quizUnlocked ? new Date().toISOString() : undefined,
+  };
+}
+
+function emptyStudyCompletion(lessonId: string): StudyCompletion {
+  return calculateStudyCompletion(lessonId, [], []);
 }
 
 export const useFinovaStore = create<FinovaStore>()(
@@ -97,6 +150,10 @@ export const useFinovaStore = create<FinovaStore>()(
       },
       completeLesson: (lessonId: string, score: number, total: number) => {
         const state = get();
+        if (!state.isQuizUnlocked(lessonId)) {
+          return { awardedXp: 0, coinsEarned: 0 };
+        }
+
         const previousResult = state.quizResults[lessonId];
         const percent = total > 0 ? score / total : 0;
         const quizXp = Math.max(5, Math.round(percent * 20));
@@ -134,6 +191,121 @@ export const useFinovaStore = create<FinovaStore>()(
 
         return { awardedXp, coinsEarned };
       },
+      markSectionRead: (lessonId: string, sectionId: string) => {
+        set((state) => {
+          const current = state.studiedLessons[lessonId] ?? emptyStudyCompletion(lessonId);
+          const next = calculateStudyCompletion(lessonId, [...current.readSectionIds, sectionId], current.completedPracticeIds);
+
+          return {
+            studiedLessons: {
+              ...state.studiedLessons,
+              [lessonId]: next,
+            },
+          };
+        });
+      },
+      completePracticeTask: (lessonId: string, taskId: string) => {
+        set((state) => {
+          const current = state.studiedLessons[lessonId] ?? emptyStudyCompletion(lessonId);
+          const next = calculateStudyCompletion(lessonId, current.readSectionIds, [...current.completedPracticeIds, taskId]);
+
+          return {
+            studiedLessons: {
+              ...state.studiedLessons,
+              [lessonId]: next,
+            },
+          };
+        });
+      },
+      completeStudyLesson: (lessonId: string) => {
+        set((state) => {
+          const lesson = getLessonById(lessonId);
+          const next = calculateStudyCompletion(
+            lessonId,
+            lesson.study.sections.map((section) => section.id),
+            lesson.study.practiceTasks.map((task) => task.id),
+          );
+
+          return {
+            studiedLessons: {
+              ...state.studiedLessons,
+              [lessonId]: next,
+            },
+          };
+        });
+      },
+      getStudyCompletion: (lessonId: string) => get().studiedLessons[lessonId] ?? emptyStudyCompletion(lessonId),
+      isQuizUnlocked: (lessonId: string) => get().getStudyCompletion(lessonId).quizUnlocked,
+      createNote: ({ title, body, className, lessonId, lessonTitle, pinned = false, favorite = false }) => {
+        const now = new Date().toISOString();
+        const id = makeEventId();
+        const note: NotebookNote = {
+          id,
+          title,
+          body,
+          className,
+          lessonId,
+          lessonTitle,
+          pinned,
+          favorite,
+          createdAt: now,
+          updatedAt: now,
+        };
+
+        set((state) => ({
+          notes: [note, ...state.notes],
+        }));
+
+        return id;
+      },
+      updateNote: (noteId, patch) => {
+        set((state) => ({
+          notes: state.notes.map((note) =>
+            note.id === noteId
+              ? {
+                  ...note,
+                  ...patch,
+                  updatedAt: new Date().toISOString(),
+                }
+              : note,
+          ),
+        }));
+      },
+      deleteNote: (noteId) => {
+        set((state) => ({
+          notes: state.notes.filter((note) => note.id !== noteId),
+        }));
+      },
+      togglePinNote: (noteId) => {
+        set((state) => ({
+          notes: state.notes.map((note) =>
+            note.id === noteId ? { ...note, pinned: !note.pinned, updatedAt: new Date().toISOString() } : note,
+          ),
+        }));
+      },
+      toggleFavoriteNote: (noteId) => {
+        set((state) => ({
+          notes: state.notes.map((note) =>
+            note.id === noteId ? { ...note, favorite: !note.favorite, updatedAt: new Date().toISOString() } : note,
+          ),
+        }));
+      },
+      toggleSavedLesson: (lessonId) => {
+        set((state) => ({
+          savedLessons: state.savedLessons.includes(lessonId)
+            ? state.savedLessons.filter((id) => id !== lessonId)
+            : [...state.savedLessons, lessonId],
+        }));
+      },
+      isLessonSaved: (lessonId) => get().savedLessons.includes(lessonId),
+      toggleDifficultFlashcard: (cardId) => {
+        set((state) => ({
+          difficultFlashcards: state.difficultFlashcards.includes(cardId)
+            ? state.difficultFlashcards.filter((id) => id !== cardId)
+            : [...state.difficultFlashcards, cardId],
+        }));
+      },
+      isFlashcardDifficult: (cardId) => get().difficultFlashcards.includes(cardId),
       addXp: (amount: number, reason: string, coins = 0) => {
         if (amount <= 0 && coins <= 0) {
           return;
@@ -173,7 +345,11 @@ export const useFinovaStore = create<FinovaStore>()(
         xp: state.xp,
         coins: state.coins,
         completedLessons: state.completedLessons,
+        studiedLessons: state.studiedLessons,
         quizResults: state.quizResults,
+        notes: state.notes,
+        savedLessons: state.savedLessons,
+        difficultFlashcards: state.difficultFlashcards,
         streak: state.streak,
         xpHistory: state.xpHistory,
       }),

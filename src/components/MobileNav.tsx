@@ -1,12 +1,12 @@
-import { Bot, ChartNoAxesColumnIncreasing, Gamepad2, Home, Trophy } from "lucide-react";
+import { Brain, Home, Library, NotebookPen, RotateCcw } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 const mobileItems = [
   { label: "Map", path: "/", icon: Home },
-  { label: "Quests", path: "/quests", icon: Trophy },
-  { label: "Games", path: "/games", icon: Gamepad2 },
-  { label: "Tutor", path: "/tutor", icon: Bot },
-  { label: "Progress", path: "/progress", icon: ChartNoAxesColumnIncreasing },
+  { label: "Library", path: "/study-library", icon: Library },
+  { label: "Notes", path: "/notebook", icon: NotebookPen },
+  { label: "Cards", path: "/flashcards", icon: Brain },
+  { label: "Revise", path: "/revision", icon: RotateCcw },
 ];
 
 export function MobileNav() {
