@@ -3,9 +3,12 @@ import { Button } from "../components/Button";
 import { Mascot } from "../components/Mascot";
 import { ProgressBar } from "../components/ProgressBar";
 import { quests } from "../data/lessons";
+import { useFinovaStore } from "../state/useFinovaStore";
 
 export function DailyMissionPage() {
   const dailyQuests = quests.filter((quest) => quest.type === "Daily");
+  const coins = useFinovaStore((state) => state.coins);
+  const spendCoins = useFinovaStore((state) => state.spendCoins);
 
   return (
     <div className="grid gap-4 xl:grid-cols-[1fr_20rem]">
@@ -53,7 +56,14 @@ export function DailyMissionPage() {
           <Flame className="h-10 w-10 fill-orange-400 text-orange-500" />
           <h3 className="mt-3 text-2xl font-black text-slate-800">Streak saver</h3>
           <p className="mt-2 font-bold text-slate-500">Use 15 gems to protect your streak if you miss a day.</p>
-          <Button variant="yellow" className="mt-4 w-full">Use saver</Button>
+          <Button
+            variant="yellow"
+            className="mt-4 w-full"
+            disabled={coins < 15}
+            onClick={() => spendCoins(15, "Used streak saver")}
+          >
+            Use saver
+          </Button>
         </div>
         <div className="duo-card p-5">
           <Timer className="h-9 w-9 text-duo-blue" />

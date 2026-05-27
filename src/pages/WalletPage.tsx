@@ -1,46 +1,124 @@
-import { ArrowDownRight, ArrowUpRight, PiggyBank, TrendingUp, WalletCards } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, PiggyBank, RotateCcw, TrendingUp, WalletCards } from "lucide-react";
+import { FormEvent, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Button } from "../components/Button";
 import { ProgressBar } from "../components/ProgressBar";
-import { savingGoals, walletTransactions } from "../data/lessons";
+import { useFinovaStore } from "../state/useFinovaStore";
+import type { WalletTransaction } from "../types";
 
-const spendingData = [
-  { category: "Food", amount: 42 },
-  { category: "Travel", amount: 24 },
-  { category: "Fun", amount: 36 },
-  { category: "School", amount: 18 },
-  { category: "Saving", amount: 55 },
-];
+const categories = ["Food", "Travel", "Fun", "School", "Saving", "Income", "Investing"];
 
 export function WalletPage() {
+  const walletTransactions = useFinovaStore((state) => state.walletTransactions);
+  const savingGoals = useFinovaStore((state) => state.savingGoals);
+  const addWalletTransaction = useFinovaStore((state) => state.addWalletTransaction);
+  const updateSavingGoal = useFinovaStore((state) => state.updateSavingGoal);
+  const resetWalletSimulator = useFinovaStore((state) => state.resetWalletSimulator);
+  const [label, setLabel] = useState("");
+  const [category, setCategory] = useState("Food");
+  const [amount, setAmount] = useState("10");
+  const [type, setType] = useState<WalletTransaction["type"]>("expense");
+
   const balance = walletTransactions.reduce((sum, item) => sum + item.amount, 500);
+  const savedTotal = savingGoals.reduce((sum, goal) => sum + goal.current, 0);
+  const investedTotal = walletTransactions
+    .filter((transaction) => transaction.type === "investment")
+    .reduce((sum, transaction) => sum + Math.abs(transaction.amount), 0);
+
+  const spendingData = useMemo(
+    () =>
+      categories.slice(0, 5).map((item) => ({
+        category: item,
+        amount: walletTransactions
+          .filter((transaction) => transaction.category === item)
+          .reduce((sum, transaction) => sum + Math.abs(transaction.amount), 0),
+      })),
+    [walletTransactions],
+  );
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    const parsedAmount = Number(amount);
+    if (!label.trim() || !Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      return;
+    }
+
+    addWalletTransaction({
+      label: label.trim(),
+      category,
+      type,
+      amount: type === "income" ? parsedAmount : -parsedAmount,
+    });
+    setLabel("");
+    setAmount("10");
+  };
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[1fr_22rem]">
+    <div className="grid gap-4 2xl:grid-cols-[1fr_22rem]">
       <section className="space-y-4">
         <div className="duo-card p-5">
           <p className="section-eyebrow">Wallet simulator</p>
           <h2 className="section-title">Practice with virtual money</h2>
-          <p className="mt-2 font-bold text-slate-500">Try saving, spending, and investing moves without touching real cash.</p>
+          <p className="mt-2 font-bold text-slate-500">
+            Add practice income, expenses, and investments. Every move is saved locally and synced to Supabase when configured.
+          </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 2xl:grid-cols-3">
           <div className="rounded-[2rem] bg-duo-green p-5 text-white shadow-[0_7px_0_#12813b]">
             <WalletCards className="h-9 w-9 text-duo-yellow" />
             <p className="mt-4 text-sm font-black uppercase text-green-100">Fake balance</p>
-            <p className="text-4xl font-black">${balance}</p>
+            <p className="text-4xl font-black">${balance.toFixed(0)}</p>
           </div>
           <div className="duo-card p-5">
             <PiggyBank className="h-9 w-9 text-duo-green" />
             <p className="mt-4 text-sm font-black uppercase text-slate-400">Saved</p>
-            <p className="text-4xl font-black text-slate-800">$645</p>
+            <p className="text-4xl font-black text-slate-800">${savedTotal.toFixed(0)}</p>
           </div>
           <div className="duo-card p-5">
             <TrendingUp className="h-9 w-9 text-duo-blue" />
             <p className="mt-4 text-sm font-black uppercase text-slate-400">Practice invested</p>
-            <p className="text-4xl font-black text-slate-800">$225</p>
+            <p className="text-4xl font-black text-slate-800">${investedTotal.toFixed(0)}</p>
           </div>
         </div>
+
+        <form className="duo-card grid gap-3 p-5 2xl:grid-cols-[1fr_9rem_8rem_9rem_auto]" onSubmit={submit}>
+          <input
+            className="rounded-2xl border-2 border-duo-gray px-4 py-3 font-bold text-slate-700 outline-none focus:border-duo-green"
+            placeholder="Practice move"
+            value={label}
+            onChange={(event) => setLabel(event.target.value)}
+          />
+          <select
+            className="rounded-2xl border-2 border-duo-gray px-3 py-3 font-black text-slate-600"
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+            aria-label="Transaction category"
+          >
+            {categories.map((item) => (
+              <option key={item}>{item}</option>
+            ))}
+          </select>
+          <input
+            className="rounded-2xl border-2 border-duo-gray px-4 py-3 font-bold text-slate-700 outline-none focus:border-duo-green"
+            type="number"
+            min="1"
+            value={amount}
+            onChange={(event) => setAmount(event.target.value)}
+            aria-label="Amount"
+          />
+          <select
+            className="rounded-2xl border-2 border-duo-gray px-3 py-3 font-black text-slate-600"
+            value={type}
+            onChange={(event) => setType(event.target.value as WalletTransaction["type"])}
+            aria-label="Transaction type"
+          >
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+            <option value="investment">Investment</option>
+          </select>
+          <Button>Add</Button>
+        </form>
 
         <section className="duo-card p-5">
           <h3 className="text-2xl font-black text-slate-800">Spending tracker</h3>
@@ -60,7 +138,12 @@ export function WalletPage() {
 
       <aside className="grid content-start gap-4">
         <section className="duo-card p-5">
-          <h3 className="text-2xl font-black text-slate-800">Saving goals</h3>
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-2xl font-black text-slate-800">Saving goals</h3>
+            <button className="icon-button" onClick={resetWalletSimulator} aria-label="Reset simulator">
+              <RotateCcw className="h-5 w-5" />
+            </button>
+          </div>
           <div className="mt-4 space-y-4">
             {savingGoals.map((goal) => (
               <div key={goal.id}>
@@ -69,6 +152,14 @@ export function WalletPage() {
                   <span>${goal.current}/${goal.target}</span>
                 </div>
                 <ProgressBar value={goal.current} max={goal.target} />
+                <div className="mt-2 flex gap-2">
+                  <Button variant="secondary" className="px-3 py-2 text-sm" onClick={() => updateSavingGoal(goal.id, goal.current + 10)}>
+                    +$10
+                  </Button>
+                  <Button variant="secondary" className="px-3 py-2 text-sm" onClick={() => updateSavingGoal(goal.id, goal.current - 10)}>
+                    -$10
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -77,7 +168,7 @@ export function WalletPage() {
         <section className="duo-card p-5">
           <h3 className="text-2xl font-black text-slate-800">Recent moves</h3>
           <div className="mt-4 space-y-3">
-            {walletTransactions.map((transaction) => (
+            {walletTransactions.slice(0, 8).map((transaction) => (
               <div key={transaction.id} className="flex items-center gap-3 rounded-2xl bg-duo-soft p-3">
                 <span className={`grid h-10 w-10 place-items-center rounded-xl ${transaction.amount >= 0 ? "bg-green-100 text-duo-green" : "bg-red-100 text-duo-red"}`}>
                   {transaction.amount >= 0 ? <ArrowUpRight className="h-5 w-5" /> : <ArrowDownRight className="h-5 w-5" />}
@@ -90,7 +181,6 @@ export function WalletPage() {
               </div>
             ))}
           </div>
-          <Button className="mt-4 w-full">Add practice move</Button>
         </section>
       </aside>
     </div>

@@ -1,16 +1,11 @@
 import { motion } from "framer-motion";
-import { Bot, ShieldAlert, Sparkles } from "lucide-react";
+import { Bot, RotateCcw, ShieldAlert, Sparkles } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { aiStatusLabel, askTutor, detectScam, generateQuiz } from "../lib/ai";
-import type { QuizQuestion, ScamAnalysis, TutorAnswer } from "../types";
+import { useFinovaStore } from "../state/useFinovaStore";
+import type { AiChatMode, QuizQuestion, ScamAnalysis, TutorAnswer } from "../types";
 import { Button } from "./Button";
 import { Mascot } from "./Mascot";
-
-type Message = {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-};
 
 function formatTutorAnswer(answer: TutorAnswer) {
   return [
@@ -37,16 +32,12 @@ function formatMiniQuiz(questions: QuizQuestion[]) {
 }
 
 export function AIChatBox() {
-  const [mode, setMode] = useState<"tutor" | "scam">("tutor");
+  const [mode, setMode] = useState<AiChatMode>("tutor");
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content: "Hi, I am Finny. Ask me a money question and I will explain it simply with an example.",
-    },
-  ]);
+  const messages = useFinovaStore((state) => state.aiMessages);
+  const addAiMessage = useFinovaStore((state) => state.addAiMessage);
+  const clearAiMessages = useFinovaStore((state) => state.clearAiMessages);
 
   const submit = async (event?: FormEvent) => {
     event?.preventDefault();
@@ -55,14 +46,14 @@ export function AIChatBox() {
       return;
     }
 
-    setMessages((current) => [...current, { id: `user-${Date.now()}`, role: "user", content: prompt }]);
+    addAiMessage({ mode, role: "user", content: prompt });
     setInput("");
     setLoading(true);
 
     const content =
       mode === "tutor" ? formatTutorAnswer(await askTutor(prompt)) : formatScamAnalysis(await detectScam(prompt));
 
-    setMessages((current) => [...current, { id: `assistant-${Date.now()}`, role: "assistant", content }]);
+    addAiMessage({ mode, role: "assistant", content });
     setLoading(false);
   };
 
@@ -70,10 +61,7 @@ export function AIChatBox() {
     const topic = input.trim() || "beginner money skills";
     setLoading(true);
     const questions = await generateQuiz(topic, "Beginner");
-    setMessages((current) => [
-      ...current,
-      { id: `assistant-${Date.now()}`, role: "assistant", content: `Mini quiz for ${topic}:\n\n${formatMiniQuiz(questions)}` },
-    ]);
+    addAiMessage({ mode, role: "assistant", content: `Mini quiz for ${topic}:\n\n${formatMiniQuiz(questions)}` });
     setLoading(false);
   };
 
@@ -96,6 +84,13 @@ export function AIChatBox() {
           >
             <ShieldAlert className="mr-1 inline h-4 w-4" />
             Scam check
+          </button>
+          <button
+            className="rounded-2xl border-2 border-slate-100 px-4 py-2 text-sm font-black text-slate-500 hover:border-duo-green hover:text-duo-green"
+            onClick={clearAiMessages}
+          >
+            <RotateCcw className="mr-1 inline h-4 w-4" />
+            Clear
           </button>
         </div>
       </div>

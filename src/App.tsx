@@ -12,6 +12,7 @@ import { LessonPage } from "./pages/LessonPage";
 import { MapPage } from "./pages/MapPage";
 import { NewsPage } from "./pages/NewsPage";
 import { NotebookPage } from "./pages/NotebookPage";
+import { ProfilePage } from "./pages/ProfilePage";
 import { ProgressPage } from "./pages/ProgressPage";
 import { QuestsPage } from "./pages/QuestsPage";
 import { QuizPage } from "./pages/QuizPage";
@@ -28,6 +29,7 @@ import {
 } from "./pages/StudyResourcePages";
 import { TutorPage } from "./pages/TutorPage";
 import { WalletPage } from "./pages/WalletPage";
+import { startFinovaCloudSync, stopFinovaCloudSync } from "./lib/finovaCloudSync";
 import { useFinovaStore } from "./state/useFinovaStore";
 
 const router = createBrowserRouter([
@@ -54,6 +56,7 @@ const router = createBrowserRouter([
       { path: "weak-topics", element: <WeakTopicsPage /> },
       { path: "daily-revision", element: <DailyRevisionPage /> },
       { path: "dictionary", element: <FinanceDictionaryPage /> },
+      { path: "profile", element: <ProfilePage /> },
       { path: "progress", element: <ProgressPage /> },
       { path: "settings", element: <SettingsPage /> },
       { path: "help", element: <HelpPage /> },
@@ -70,6 +73,11 @@ export default function App() {
   useEffect(() => {
     checkIn();
   }, [checkIn]);
+
+  useEffect(() => {
+    startFinovaCloudSync();
+    return () => stopFinovaCloudSync();
+  }, []);
 
   return <RouterProvider router={router} />;
 }

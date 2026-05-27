@@ -1,7 +1,11 @@
 import { Bookmark, Clock3, Newspaper } from "lucide-react";
 import { newsItems } from "../data/lessons";
+import { useFinovaStore } from "../state/useFinovaStore";
 
 export function NewsPage() {
+  const toggleBookmarkedNews = useFinovaStore((state) => state.toggleBookmarkedNews);
+  const bookmarkedNews = useFinovaStore((state) => state.bookmarkedNews);
+
   return (
     <div className="space-y-4">
       <section className="duo-card p-5">
@@ -11,30 +15,37 @@ export function NewsPage() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {newsItems.map((item) => (
-          <article key={item.id} className="duo-card overflow-hidden">
-            <div className="h-36 p-4" style={{ background: item.thumbnail }}>
-              <div className="flex justify-between">
-                <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-black text-slate-700">{item.category}</span>
-                <button className="grid h-10 w-10 place-items-center rounded-2xl bg-white/90 text-duo-green" aria-label={`Bookmark ${item.title}`}>
-                  <Bookmark className={`h-5 w-5 ${item.bookmarked ? "fill-duo-green" : ""}`} />
-                </button>
+        {newsItems.map((item) => {
+          const bookmarked = bookmarkedNews.includes(item.id);
+          return (
+            <article key={item.id} className="duo-card overflow-hidden">
+              <div className="h-36 p-4" style={{ background: item.thumbnail }}>
+                <div className="flex justify-between">
+                  <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-black text-slate-700">{item.category}</span>
+                  <button
+                    className="grid h-10 w-10 place-items-center rounded-2xl bg-white/90 text-duo-green"
+                    aria-label={`Bookmark ${item.title}`}
+                    onClick={() => toggleBookmarkedNews(item.id)}
+                  >
+                    <Bookmark className={`h-5 w-5 ${bookmarked ? "fill-duo-green" : ""}`} />
+                  </button>
+                </div>
               </div>
-            </div>
-            <div className="p-5">
-              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-400">
-                <Newspaper className="h-4 w-4" />
-                Finova Brief
+              <div className="p-5">
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-slate-400">
+                  <Newspaper className="h-4 w-4" />
+                  Finova Brief
+                </div>
+                <h3 className="mt-3 text-2xl font-black leading-tight text-slate-800">{item.title}</h3>
+                <p className="mt-2 min-h-12 text-sm font-bold leading-6 text-slate-500">{item.summary}</p>
+                <div className="mt-4 flex items-center gap-2 text-sm font-black text-duo-green">
+                  <Clock3 className="h-4 w-4" />
+                  {item.readTime}
+                </div>
               </div>
-              <h3 className="mt-3 text-2xl font-black leading-tight text-slate-800">{item.title}</h3>
-              <p className="mt-2 min-h-12 text-sm font-bold leading-6 text-slate-500">{item.summary}</p>
-              <div className="mt-4 flex items-center gap-2 text-sm font-black text-duo-green">
-                <Clock3 className="h-4 w-4" />
-                {item.readTime}
-              </div>
-            </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </section>
     </div>
   );

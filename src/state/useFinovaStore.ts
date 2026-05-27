@@ -1,22 +1,56 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { getLessonById, getLevel, getNextLevel, lessons } from "../data/lessons";
-import type { NotebookNote, QuizResult, SectionName, StreakState, StudyCompletion, XpEvent } from "../types";
+import {
+  getLessonById,
+  getLevel,
+  getNextLevel,
+  lessons,
+  newsItems,
+  savingGoals as seedSavingGoals,
+  walletTransactions as seedWalletTransactions,
+} from "../data/lessons";
+import type {
+  AiChatMessage,
+  NotebookNote,
+  QuizResult,
+  SavingGoal,
+  SectionName,
+  StreakState,
+  StudyCompletion,
+  UserProfileSettings,
+  WalletTransaction,
+  XpEvent,
+} from "../types";
 
-type FinovaStore = {
+export type CloudSyncStatus = "idle" | "connecting" | "synced" | "saving" | "offline" | "error";
+
+export type FinovaStore = {
   xp: number;
   coins: number;
+  profile: UserProfileSettings;
   completedLessons: string[];
   studiedLessons: Record<string, StudyCompletion>;
   quizResults: Record<string, QuizResult>;
   notes: NotebookNote[];
   savedLessons: string[];
   difficultFlashcards: string[];
+  playedGames: string[];
+  bookmarkedNews: string[];
+  walletTransactions: WalletTransaction[];
+  savingGoals: SavingGoal[];
+  aiMessages: AiChatMessage[];
   streak: StreakState;
   xpHistory: XpEvent[];
+  cloudSyncStatus: CloudSyncStatus;
+  cloudSyncUserId: string;
+  cloudSyncError: string;
+  cloudLastSyncedAt: string;
+  cloudHydrated: boolean;
+  cloudSyncPaused: boolean;
   checkIn: () => void;
   completeLesson: (lessonId: string, score: number, total: number) => { awardedXp: number; coinsEarned: number };
   addXp: (amount: number, reason: string, coins?: number) => void;
+  updateProfile: (patch: Partial<UserProfileSettings>) => void;
   markSectionRead: (lessonId: string, sectionId: string) => void;
   completePracticeTask: (lessonId: string, taskId: string) => void;
   completeStudyLesson: (lessonId: string) => void;
@@ -39,11 +73,42 @@ type FinovaStore = {
   isLessonSaved: (lessonId: string) => boolean;
   toggleDifficultFlashcard: (cardId: string) => void;
   isFlashcardDifficult: (cardId: string) => boolean;
+  playGame: (gameId: string, xpReward: number, title: string) => void;
+  spendCoins: (amount: number, reason: string) => boolean;
+  toggleBookmarkedNews: (newsId: string) => void;
+  isNewsBookmarked: (newsId: string) => boolean;
+  addWalletTransaction: (transaction: Omit<WalletTransaction, "id">) => void;
+  updateSavingGoal: (goalId: string, current: number) => void;
+  resetWalletSimulator: () => void;
+  addAiMessage: (message: Omit<AiChatMessage, "id" | "createdAt"> & { id?: string; createdAt?: string }) => void;
+  clearAiMessages: () => void;
+  replaceCloudState: (payload: Partial<FinovaCloudState>, userId: string) => void;
+  setCloudSyncMeta: (patch: Partial<Pick<FinovaStore, "cloudSyncStatus" | "cloudSyncUserId" | "cloudSyncError" | "cloudLastSyncedAt" | "cloudHydrated" | "cloudSyncPaused">>) => void;
   isLessonCompleted: (lessonId: string) => boolean;
   isLessonUnlocked: (lessonId: string) => boolean;
   getCurrentLessonId: () => string;
   resetProgress: () => void;
 };
+
+export type FinovaCloudState = Pick<
+  FinovaStore,
+  | "xp"
+  | "coins"
+  | "profile"
+  | "completedLessons"
+  | "studiedLessons"
+  | "quizResults"
+  | "notes"
+  | "savedLessons"
+  | "difficultFlashcards"
+  | "playedGames"
+  | "bookmarkedNews"
+  | "walletTransactions"
+  | "savingGoals"
+  | "aiMessages"
+  | "streak"
+  | "xpHistory"
+>;
 
 const initialStreak: StreakState = {
   count: 0,
@@ -52,17 +117,45 @@ const initialStreak: StreakState = {
   history: [],
 };
 
+const initialProfile: UserProfileSettings = {
+  displayName: "Finova You",
+  avatar: "Y",
+  studentLevel: "Beginner",
+  notificationsEnabled: true,
+  leaderboardVisible: true,
+};
+
 const initialState = {
   xp: 0,
   coins: 50,
+  profile: initialProfile,
   completedLessons: [] as string[],
   studiedLessons: {} as Record<string, StudyCompletion>,
   quizResults: {} as Record<string, QuizResult>,
   notes: [] as NotebookNote[],
   savedLessons: [] as string[],
   difficultFlashcards: [] as string[],
+  playedGames: [] as string[],
+  bookmarkedNews: newsItems.filter((item) => item.bookmarked).map((item) => item.id),
+  walletTransactions: seedWalletTransactions as WalletTransaction[],
+  savingGoals: seedSavingGoals as SavingGoal[],
+  aiMessages: [
+    {
+      id: "welcome",
+      mode: "tutor",
+      role: "assistant",
+      content: "Hi, I am Finny. Ask me a money question and I will explain it simply with an example.",
+      createdAt: new Date(0).toISOString(),
+    },
+  ] as AiChatMessage[],
   streak: initialStreak,
   xpHistory: [] as XpEvent[],
+  cloudSyncStatus: "idle" as CloudSyncStatus,
+  cloudSyncUserId: "",
+  cloudSyncError: "",
+  cloudLastSyncedAt: "",
+  cloudHydrated: false,
+  cloudSyncPaused: false,
 };
 
 function dateKey(date = new Date()) {
@@ -306,6 +399,115 @@ export const useFinovaStore = create<FinovaStore>()(
         }));
       },
       isFlashcardDifficult: (cardId) => get().difficultFlashcards.includes(cardId),
+      playGame: (gameId, xpReward, title) => {
+        const state = get();
+        if (state.playedGames.includes(gameId)) {
+          return;
+        }
+
+        set((current) => {
+          const nextXp = current.xp + xpReward;
+          return {
+            xp: nextXp,
+            coins: current.coins + Math.max(5, Math.round(xpReward / 2)),
+            playedGames: [...current.playedGames, gameId],
+            xpHistory: [...current.xpHistory, xpEvent(nextXp, xpReward, `Played ${title}`)],
+          };
+        });
+      },
+      spendCoins: (amount, reason) => {
+        if (amount <= 0) {
+          return false;
+        }
+
+        const state = get();
+        if (state.coins < amount) {
+          return false;
+        }
+
+        set((current) => ({
+          coins: current.coins - amount,
+          xpHistory: [...current.xpHistory, xpEvent(current.xp, 0, reason)],
+        }));
+        return true;
+      },
+      toggleBookmarkedNews: (newsId) => {
+        set((state) => ({
+          bookmarkedNews: state.bookmarkedNews.includes(newsId)
+            ? state.bookmarkedNews.filter((id) => id !== newsId)
+            : [...state.bookmarkedNews, newsId],
+        }));
+      },
+      isNewsBookmarked: (newsId) => get().bookmarkedNews.includes(newsId),
+      addWalletTransaction: (transaction) => {
+        const next: WalletTransaction = {
+          ...transaction,
+          id: makeEventId(),
+        };
+
+        set((state) => ({
+          walletTransactions: [next, ...state.walletTransactions],
+        }));
+      },
+      updateSavingGoal: (goalId, current) => {
+        set((state) => ({
+          savingGoals: state.savingGoals.map((goal) =>
+            goal.id === goalId
+              ? {
+                  ...goal,
+                  current: Math.max(0, Math.min(goal.target, current)),
+                }
+              : goal,
+          ),
+        }));
+      },
+      resetWalletSimulator: () => {
+        set({
+          walletTransactions: seedWalletTransactions,
+          savingGoals: seedSavingGoals,
+        });
+      },
+      addAiMessage: ({ id, createdAt, ...message }) => {
+        const next: AiChatMessage = {
+          ...message,
+          id: id ?? makeEventId(),
+          createdAt: createdAt ?? new Date().toISOString(),
+        };
+
+        set((state) => ({
+          aiMessages: [...state.aiMessages, next].slice(-80),
+        }));
+      },
+      clearAiMessages: () => {
+        set({
+          aiMessages: initialState.aiMessages,
+        });
+      },
+      replaceCloudState: (payload, userId) => {
+        set((state) => ({
+          ...payload,
+          cloudSyncUserId: userId,
+          cloudSyncStatus: "synced",
+          cloudSyncError: "",
+          cloudHydrated: true,
+          cloudLastSyncedAt: new Date().toISOString(),
+          cloudSyncPaused: false,
+          profile: {
+            ...state.profile,
+            ...payload.profile,
+          },
+        }));
+      },
+      setCloudSyncMeta: (patch) => {
+        set((state) => ({
+          cloudSyncStatus: patch.cloudSyncStatus ?? state.cloudSyncStatus,
+          cloudSyncUserId: patch.cloudSyncUserId ?? state.cloudSyncUserId,
+          cloudSyncError: patch.cloudSyncError ?? state.cloudSyncError,
+          cloudLastSyncedAt: patch.cloudLastSyncedAt ?? state.cloudLastSyncedAt,
+          cloudHydrated: patch.cloudHydrated ?? state.cloudHydrated,
+          cloudSyncPaused: patch.cloudSyncPaused ?? state.cloudSyncPaused,
+        }));
+      },
       addXp: (amount: number, reason: string, coins = 0) => {
         if (amount <= 0 && coins <= 0) {
           return;
@@ -320,6 +522,15 @@ export const useFinovaStore = create<FinovaStore>()(
               amount > 0 ? [...state.xpHistory, xpEvent(nextXp, amount, reason)] : state.xpHistory,
           };
         });
+      },
+      updateProfile: (patch) => {
+        set((state) => ({
+          profile: {
+            ...state.profile,
+            ...patch,
+            avatar: patch.avatar ? patch.avatar.slice(0, 2).toUpperCase() : state.profile.avatar,
+          },
+        }));
       },
       isLessonCompleted: (lessonId: string) => get().completedLessons.includes(lessonId),
       isLessonUnlocked: (lessonId: string) => {
@@ -344,12 +555,18 @@ export const useFinovaStore = create<FinovaStore>()(
       partialize: (state) => ({
         xp: state.xp,
         coins: state.coins,
+        profile: state.profile,
         completedLessons: state.completedLessons,
         studiedLessons: state.studiedLessons,
         quizResults: state.quizResults,
         notes: state.notes,
         savedLessons: state.savedLessons,
         difficultFlashcards: state.difficultFlashcards,
+        playedGames: state.playedGames,
+        bookmarkedNews: state.bookmarkedNews,
+        walletTransactions: state.walletTransactions,
+        savingGoals: state.savingGoals,
+        aiMessages: state.aiMessages,
         streak: state.streak,
         xpHistory: state.xpHistory,
       }),

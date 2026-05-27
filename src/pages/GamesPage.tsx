@@ -7,6 +7,8 @@ const levelOrder = ["Beginner", "Smart Saver", "Investor", "Money Master", "Fina
 
 export function GamesPage() {
   const xp = useFinovaStore((state) => state.xp);
+  const playedGames = useFinovaStore((state) => state.playedGames);
+  const playGame = useFinovaStore((state) => state.playGame);
   const level = getLevel(xp);
   const currentRank = levelOrder.indexOf(level.name);
 
@@ -24,13 +26,14 @@ export function GamesPage() {
         {games.map((game) => {
           const Icon = game.icon;
           const locked = currentRank < levelOrder.indexOf(game.levelRequirement);
+          const played = playedGames.includes(game.id);
           return (
             <article key={game.id} className={`duo-card overflow-hidden p-4 ${locked ? "opacity-70" : ""}`}>
               <div className="rounded-[1.7rem] p-5 text-white" style={{ backgroundColor: game.color }}>
                 <div className="flex items-start justify-between">
                   <Icon className="h-10 w-10" />
                   <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-black">
-                    {locked ? "Locked" : "Ready"}
+                    {locked ? "Locked" : played ? "Played" : "Ready"}
                   </span>
                 </div>
                 <h3 className="mt-6 text-2xl font-black">{game.title}</h3>
@@ -45,9 +48,9 @@ export function GamesPage() {
                   <Zap className="h-4 w-4" /> {game.xpReward} XP
                 </span>
               </div>
-              <Button className="mt-4 w-full" disabled={locked}>
+              <Button className="mt-4 w-full" disabled={locked || played} onClick={() => playGame(game.id, game.xpReward, game.title)}>
                 {locked ? <LockKeyhole className="mr-1 inline h-5 w-5" /> : <Play className="mr-1 inline h-5 w-5 fill-white" />}
-                {locked ? "Locked" : "Play"}
+                {locked ? "Locked" : played ? "Reward collected" : "Play"}
               </Button>
             </article>
           );

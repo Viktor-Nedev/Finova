@@ -7,6 +7,7 @@ import { useFinovaStore } from "../state/useFinovaStore";
 export function ProfilePage() {
   const xp = useFinovaStore((state) => state.xp);
   const coins = useFinovaStore((state) => state.coins);
+  const profile = useFinovaStore((state) => state.profile);
   const completedLessons = useFinovaStore((state) => state.completedLessons);
   const resetProgress = useFinovaStore((state) => state.resetProgress);
   const level = getLevel(xp);
@@ -16,10 +17,10 @@ export function ProfilePage() {
       <section className="duo-card grid gap-6 p-6 sm:p-8 lg:grid-cols-[1fr_20rem]">
         <div>
           <div className="grid h-24 w-24 place-items-center rounded-[2rem] bg-duo-green text-white shadow-duo">
-            <UserRound className="h-12 w-12" />
+            {profile.avatar ? <span className="text-4xl font-black">{profile.avatar}</span> : <UserRound className="h-12 w-12" />}
           </div>
-          <h1 className="mt-5 text-4xl font-black text-slate-800 sm:text-5xl">Student profile</h1>
-          <p className="mt-3 text-lg font-bold text-slate-500">Local demo profile with Supabase-ready progress structure.</p>
+          <h1 className="mt-5 text-4xl font-black text-slate-800 sm:text-5xl">{profile.displayName}</h1>
+          <p className="mt-3 text-lg font-bold text-slate-500">Synced learning profile with Supabase-backed progress.</p>
         </div>
         <Mascot message="Keep collecting coins and badges!" />
       </section>

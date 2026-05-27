@@ -192,6 +192,24 @@ export type NotebookNote = {
   updatedAt: string;
 };
 
+export type UserProfileSettings = {
+  displayName: string;
+  avatar: string;
+  studentLevel: Difficulty;
+  notificationsEnabled: boolean;
+  leaderboardVisible: boolean;
+};
+
+export type AiChatMode = "tutor" | "scam";
+
+export type AiChatMessage = {
+  id: string;
+  mode: AiChatMode;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: string;
+};
+
 export type Flashcard = {
   id: string;
   front: string;

@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-The app runs locally with mock data, Zustand persistence, and deterministic AI fallbacks. Supabase and OpenAI can be connected through the included Edge Function.
+The app runs locally with seeded lesson content, Zustand persistence, and deterministic AI fallbacks. When Supabase env vars are present, user state is synced to Supabase automatically.
 
 ## Included Pages
 
@@ -23,6 +23,15 @@ The app runs locally with mock data, Zustand persistence, and deterministic AI f
 - Badges
 - Wallet Simulator
 - AI Tutor
+- Notebook
+- Flashcards
+- Revision Center
+- Study Library
+- Saved Lessons
+- Practice Arena
+- Weak Topics
+- Daily Revision
+- Finance Dictionary
 - Progress
 - Settings
 - Help & Support
@@ -40,14 +49,30 @@ The app runs locally with mock data, Zustand persistence, and deterministic AI f
 - Supabase
 - OpenAI through Supabase Edge Functions
 
-## AI Setup
+## Supabase Setup
 
 Copy `.env.example` to `.env`:
 
 ```bash
-VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_URL=https://xjsfqxgpghmxsxbptkdo.supabase.co
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
+
+Run `supabase/schema.sql` in the Supabase SQL editor. Enable Anonymous sign-ins in Supabase Auth, or replace the anonymous session flow in `src/lib/finovaCloud.ts` with your preferred auth method.
+
+The app syncs:
+
+- profile/settings
+- XP, gems, streak, and XP history
+- lesson completion and study unlock progress
+- quiz results
+- notebook notes
+- saved lessons
+- difficult flashcards
+- AI tutor chat history
+- wallet simulator transactions and saving goals
+
+## AI Setup
 
 Deploy the Edge Function and set secrets:
 
@@ -61,12 +86,21 @@ supabase secrets set OPENAI_MODEL=gpt-4o-mini
 
 Run `supabase/schema.sql` to create:
 
-- `users`
-- `lessons`
-- `user_progress`
-- `quizzes`
-- `quiz_results`
-- `ai_chats`
+- `finova_profiles`
+- `finova_user_state`
+- `finova_study_progress`
+- `finova_quiz_results`
+- `finova_notes`
+- `finova_saved_lessons`
+- `finova_difficult_flashcards`
+- `finova_played_games`
+- `finova_bookmarked_news`
+- `finova_xp_events`
+- `finova_wallet_transactions`
+- `finova_saving_goals`
+- `finova_ai_messages`
+
+All user-owned tables have Row Level Security policies scoped to `auth.uid()`.
 
 ## Gamification
 

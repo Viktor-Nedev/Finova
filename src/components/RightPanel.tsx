@@ -1,5 +1,5 @@
 import { Flame, Gem, Medal, ShieldCheck, Target, Trophy, Zap } from "lucide-react";
-import { leaderboard, quests, savingGoals } from "../data/lessons";
+import { leaderboard, quests } from "../data/lessons";
 import { useFinovaStore } from "../state/useFinovaStore";
 import { Mascot } from "./Mascot";
 import { ProgressBar } from "./ProgressBar";
@@ -8,7 +8,12 @@ export function RightPanel() {
   const xp = useFinovaStore((state) => state.xp);
   const coins = useFinovaStore((state) => state.coins);
   const streak = useFinovaStore((state) => state.streak.count);
+  const profile = useFinovaStore((state) => state.profile);
+  const savingGoals = useFinovaStore((state) => state.savingGoals);
   const dailyQuest = quests[0];
+  const leagueRows = leaderboard.slice(0, 4).map((user) =>
+    user.isCurrentUser ? { ...user, name: profile.displayName, avatar: profile.avatar, xp, streak } : user,
+  );
 
   return (
     <aside className="hidden h-screen overflow-y-auto border-l-2 border-duo-gray bg-white p-5 lg:block">
@@ -61,7 +66,7 @@ export function RightPanel() {
           <Medal className="h-7 w-7 text-duo-yellow" />
         </div>
         <div className="mt-3 space-y-2">
-          {leaderboard.slice(0, 4).map((user) => (
+          {leagueRows.map((user) => (
             <div
               key={user.id}
               className={`flex items-center gap-3 rounded-2xl p-2 ${

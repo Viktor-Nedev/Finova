@@ -1,4 +1,4 @@
-import { Bell, Bot, Flame, Gem, Search, UserRound, Zap } from "lucide-react";
+import { Bell, Bot, Cloud, CloudOff, Flame, Gem, Search, Zap } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useFinovaStore } from "../state/useFinovaStore";
 
@@ -6,6 +6,9 @@ export function TopHeader() {
   const xp = useFinovaStore((state) => state.xp);
   const coins = useFinovaStore((state) => state.coins);
   const streak = useFinovaStore((state) => state.streak.count);
+  const profile = useFinovaStore((state) => state.profile);
+  const cloudStatus = useFinovaStore((state) => state.cloudSyncStatus);
+  const synced = cloudStatus === "synced" || cloudStatus === "saving" || cloudStatus === "connecting";
 
   return (
     <header className="flex h-[5.25rem] shrink-0 items-center gap-3 border-b-2 border-duo-gray bg-white px-3 sm:px-5 lg:px-6">
@@ -35,6 +38,15 @@ export function TopHeader() {
       <button className="icon-button" aria-label="Notifications">
         <Bell className="h-5 w-5" />
       </button>
+      <span
+        className={`hidden items-center gap-1 rounded-2xl border-2 px-3 py-2 text-xs font-black xl:inline-flex ${
+          synced ? "border-green-100 bg-green-50 text-duo-green" : "border-yellow-100 bg-yellow-50 text-amber-600"
+        }`}
+        title={`Supabase sync: ${cloudStatus}`}
+      >
+        {synced ? <Cloud className="h-4 w-4" /> : <CloudOff className="h-4 w-4" />}
+        <span className="hidden 2xl:inline">{cloudStatus}</span>
+      </span>
       <NavLink
         to="/tutor"
         className="hidden rounded-2xl border-2 border-duo-green bg-white px-4 py-2.5 text-sm font-black text-duo-green shadow-[0_5px_0_#bbf7d0] transition hover:-translate-y-0.5 sm:inline-flex sm:items-center sm:gap-2"
@@ -42,9 +54,13 @@ export function TopHeader() {
         <Bot className="h-5 w-5" />
         AI Tutor
       </NavLink>
-      <button className="grid h-12 w-12 place-items-center rounded-2xl bg-duo-green text-white shadow-[0_5px_0_#12813b]" aria-label="Profile">
-        <UserRound className="h-6 w-6" />
-      </button>
+      <NavLink
+        to="/profile"
+        className="grid h-12 w-12 place-items-center rounded-2xl bg-duo-green text-lg font-black text-white shadow-[0_5px_0_#12813b]"
+        aria-label="Profile"
+      >
+        {profile.avatar}
+      </NavLink>
     </header>
   );
 }

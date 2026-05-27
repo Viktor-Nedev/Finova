@@ -1,11 +1,26 @@
 import { Flame, Medal, Trophy, Users } from "lucide-react";
 import { useState } from "react";
 import { leaderboard } from "../data/lessons";
+import { useFinovaStore } from "../state/useFinovaStore";
 
 const tabs = ["Global", "Friends", "Country"] as const;
 
 export function LeaderboardsPage() {
   const [tab, setTab] = useState<(typeof tabs)[number]>("Global");
+  const profile = useFinovaStore((state) => state.profile);
+  const xp = useFinovaStore((state) => state.xp);
+  const streak = useFinovaStore((state) => state.streak.count);
+  const rows = leaderboard.map((user) =>
+    user.isCurrentUser
+      ? {
+          ...user,
+          name: profile.displayName,
+          avatar: profile.avatar,
+          xp,
+          streak,
+        }
+      : user,
+  );
 
   return (
     <div className="space-y-4">
@@ -34,7 +49,7 @@ export function LeaderboardsPage() {
           <span>XP</span>
           <span>Streak</span>
         </div>
-        {leaderboard.map((user) => (
+        {rows.map((user) => (
           <div
             key={user.id}
             className={`grid grid-cols-[4rem_1fr_7rem_7rem] items-center px-4 py-4 ${
